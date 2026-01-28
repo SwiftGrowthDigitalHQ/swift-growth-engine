@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
+import { PageTransition } from "@/components/PageTransition";
 import { Check, ArrowRight, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
@@ -77,7 +78,8 @@ const Pricing = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pt-20">
+      <PageTransition>
+        <main className="pt-20">
         {/* Hero */}
         <section className="py-16 md:py-24 relative">
           <div className="absolute inset-0 bg-hero-glow" />
@@ -205,8 +207,9 @@ const Pricing = () => {
               </a>
             </AnimatedSection>
           </div>
-        </section>
-      </main>
+          </section>
+        </main>
+      </PageTransition>
       <Footer />
       <UnifiedChatWidget />
     </div>
