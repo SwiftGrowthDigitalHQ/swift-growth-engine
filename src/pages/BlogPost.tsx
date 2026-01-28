@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { UnifiedChatWidget } from '@/components/UnifiedChatWidget';
+import { PageTransition } from '@/components/PageTransition';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Calendar, Clock, User, Share2, MessageCircle } from 'lucide-react';
 import { trackConversion } from '@/lib/analytics';
@@ -439,20 +440,22 @@ const BlogPost = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="pt-20">
-          <div className="container mx-auto px-4 py-24 text-center">
-            <h1 className="text-4xl font-display font-bold mb-4">Article Not Found</h1>
-            <p className="text-muted-foreground mb-8">
-              Sorry, we couldn't find the article you're looking for.
-            </p>
-            <Link to="/blog">
-              <Button>
-                <ArrowLeft className="w-4 h-4" />
-                Back to Blog
-              </Button>
-            </Link>
-          </div>
-        </main>
+        <PageTransition>
+          <main className="pt-20">
+            <div className="container mx-auto px-4 py-24 text-center">
+              <h1 className="text-4xl font-display font-bold mb-4">Article Not Found</h1>
+              <p className="text-muted-foreground mb-8">
+                Sorry, we couldn't find the article you're looking for.
+              </p>
+              <Link to="/blog">
+                <Button>
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Blog
+                </Button>
+              </Link>
+            </div>
+          </main>
+        </PageTransition>
         <Footer />
       </div>
     );
@@ -465,7 +468,8 @@ const BlogPost = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pt-20">
+      <PageTransition>
+        <main className="pt-20">
         {/* Hero */}
         <section className="py-12 md:py-16 border-b border-border">
           <div className="container mx-auto px-4">
@@ -678,6 +682,7 @@ const BlogPost = () => {
           </div>
         </section>
       </main>
+      </PageTransition>
       <Footer />
       <UnifiedChatWidget />
     </div>
