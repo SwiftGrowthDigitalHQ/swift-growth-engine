@@ -11,6 +11,7 @@ import {
   Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AnimatedSection } from "@/hooks/use-scroll-animation";
 
 const services = [
   {
@@ -91,7 +92,7 @@ const Services = () => {
         <section className="py-16 md:py-24 relative">
           <div className="absolute inset-0 bg-hero-glow" />
           <div className="container mx-auto px-4 relative z-10">
-            <div className="max-w-3xl mx-auto text-center">
+            <AnimatedSection className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6">
                 Our <span className="text-gradient">Services</span>
               </h1>
@@ -99,7 +100,7 @@ const Services = () => {
                 Complete digital marketing solutions to grow your local business. 
                 From website to ads to WhatsApp - we handle everything.
               </p>
-            </div>
+            </AnimatedSection>
           </div>
         </section>
 
@@ -108,40 +109,45 @@ const Services = () => {
           <div className="container mx-auto px-4">
             <div className="space-y-16">
               {services.map((service, index) => (
-                <div
+                <AnimatedSection
                   key={index}
-                  className={`flex flex-col lg:flex-row gap-8 lg:gap-16 items-center ${
-                    index % 2 === 1 ? "lg:flex-row-reverse" : ""
-                  }`}
+                  direction={index % 2 === 0 ? "left" : "right"}
+                  delay={100}
                 >
-                  {/* Content */}
-                  <div className="flex-1 space-y-6">
-                    <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <service.icon className="w-7 h-7 text-primary" />
+                  <div
+                    className={`flex flex-col lg:flex-row gap-8 lg:gap-16 items-center ${
+                      index % 2 === 1 ? "lg:flex-row-reverse" : ""
+                    }`}
+                  >
+                    {/* Content */}
+                    <div className="flex-1 space-y-6">
+                      <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <service.icon className="w-7 h-7 text-primary" />
+                      </div>
+                      <h2 className="text-3xl font-display font-bold text-foreground">
+                        {service.title}
+                      </h2>
+                      <p className="text-lg text-muted-foreground">
+                        {service.description}
+                      </p>
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {service.features.map((feature, i) => (
+                          <li key={i} className="flex items-center gap-2">
+                            <Check className="w-5 h-5 text-primary flex-shrink-0" />
+                            <span className="text-sm text-muted-foreground">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <h2 className="text-3xl font-display font-bold text-foreground">
-                      {service.title}
-                    </h2>
-                    <p className="text-lg text-muted-foreground">
-                      {service.description}
-                    </p>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {service.features.map((feature, i) => (
-                        <li key={i} className="flex items-center gap-2">
-                          <Check className="w-5 h-5 text-primary flex-shrink-0" />
-                          <span className="text-sm text-muted-foreground">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
 
-                  {/* Visual */}
-                  <div className="flex-1 w-full">
-                    <div className="aspect-video rounded-2xl bg-gradient-card border border-border flex items-center justify-center">
-                      <service.icon className="w-20 h-20 text-primary/30" />
+                    {/* Visual */}
+                    <div className="flex-1 w-full">
+                      <div className="aspect-video rounded-2xl bg-gradient-card border border-border flex items-center justify-center">
+                        <service.icon className="w-20 h-20 text-primary/30" />
+                      </div>
                     </div>
                   </div>
-                </div>
+                </AnimatedSection>
               ))}
             </div>
           </div>
@@ -150,7 +156,7 @@ const Services = () => {
         {/* CTA */}
         <section className="py-16 md:py-24">
           <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center">
+            <AnimatedSection className="max-w-3xl mx-auto text-center">
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-6">
                 Ready to Grow Your Business?
               </h2>
@@ -164,7 +170,7 @@ const Services = () => {
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </a>
-            </div>
+            </AnimatedSection>
           </div>
         </section>
       </main>
