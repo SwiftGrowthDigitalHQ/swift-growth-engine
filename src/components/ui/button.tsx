@@ -9,15 +9,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl",
+        default: "bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-lg hover:shadow-xl",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-primary-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent/10 hover:text-accent",
-        link: "text-accent underline-offset-4 hover:underline",
+        outline: "border-2 border-primary bg-transparent text-foreground hover:bg-primary hover:text-primary-foreground",
+        secondary: "bg-muted text-foreground hover:bg-muted/80",
+        ghost: "hover:bg-primary/10 hover:text-primary",
+        link: "text-secondary underline-offset-4 hover:underline",
         whatsapp: "bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90 glow-whatsapp shadow-lg hover:shadow-xl",
-        hero: "bg-gradient-primary text-primary glow-accent shadow-xl hover:shadow-2xl hover:scale-105",
-        heroOutline: "border-2 border-primary/30 bg-transparent text-primary hover:border-accent hover:text-accent",
+        hero: "bg-gradient-primary text-whatsapp-foreground glow-whatsapp shadow-xl hover:shadow-2xl hover:scale-105",
+        heroOutline: "border-2 border-secondary/50 bg-transparent text-secondary hover:border-secondary hover:bg-secondary/10",
       },
       size: {
         default: "h-11 px-6 py-2",
