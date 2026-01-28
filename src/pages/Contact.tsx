@@ -2,6 +2,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { SwiftBot } from "@/components/SwiftBot";
+import { ContactForm } from "@/components/ContactForm";
 import { Phone, Mail, MapPin, MessageCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -31,31 +32,43 @@ const Contact = () => {
         {/* Contact Options */}
         <section className="py-16">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
-              {/* Primary - WhatsApp */}
-              <div className="p-8 rounded-2xl bg-gradient-card border border-primary glow-primary">
-                <div className="w-14 h-14 rounded-xl bg-whatsapp flex items-center justify-center mb-6">
-                  <MessageCircle className="w-7 h-7 text-whatsapp-foreground" />
-                </div>
-                <h3 className="text-2xl font-display font-bold text-foreground mb-3">
-                  WhatsApp (Recommended)
+            <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-8">
+              {/* Contact Form */}
+              <div className="p-8 rounded-2xl bg-card border border-border">
+                <h3 className="text-2xl font-display font-bold text-foreground mb-6">
+                  Send Us a Message
                 </h3>
-                <p className="text-muted-foreground mb-6">
-                  Get the fastest response. We usually reply within 1 hour during business hours.
-                </p>
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                  <Button variant="whatsapp" size="lg" className="w-full">
-                    <MessageCircle className="w-5 h-5" />
-                    Chat on WhatsApp
-                  </Button>
-                </a>
-                <p className="text-sm text-muted-foreground mt-4 text-center">
-                  +91 9229721835
-                </p>
+                <ContactForm source="contact_page" />
               </div>
 
               {/* Other Contact Methods */}
               <div className="space-y-6">
+                {/* Primary - WhatsApp */}
+                <div className="p-6 rounded-2xl bg-gradient-card border border-primary glow-primary">
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-whatsapp flex items-center justify-center flex-shrink-0">
+                      <MessageCircle className="w-7 h-7 text-whatsapp-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-display font-bold text-foreground mb-2">
+                        WhatsApp (Recommended)
+                      </h3>
+                      <p className="text-muted-foreground mb-4 text-sm">
+                        Get the fastest response. We usually reply within 1 hour during business hours.
+                      </p>
+                      <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                        <Button variant="whatsapp" size="sm">
+                          <MessageCircle className="w-4 h-4" />
+                          Chat on WhatsApp
+                        </Button>
+                      </a>
+                      <p className="text-sm text-muted-foreground mt-3">
+                        +91 9229721835
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Phone */}
                 <a 
                   href="tel:+919229721835"
