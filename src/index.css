@@ -6,69 +6,73 @@
 
 @layer base {
   :root {
-    /* Background: Off-white #F8FAFC */
-    --background: 210 40% 98%;
-    /* Text: Dark slate #0F172A */
-    --foreground: 222 47% 11%;
+    /* Background: Dark charcoal */
+    --background: 220 20% 8%;
+    /* Text: White */
+    --foreground: 0 0% 98%;
 
-    /* Card backgrounds - clean white */
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    /* Card backgrounds - dark elevated */
+    --card: 220 20% 12%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 220 20% 12%;
+    --popover-foreground: 0 0% 98%;
 
-    /* Primary: Sky Blue #38BDF8 */
-    --primary: 199 89% 60%;
-    --primary-foreground: 222 47% 11%;
+    /* Primary: Strong Orange #F97316 */
+    --primary: 25 95% 53%;
+    --primary-foreground: 0 0% 98%;
 
-    /* Secondary: Deep Sky Blue #0284C7 */
-    --secondary: 201 96% 40%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary: Muted dark */
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 0 0% 98%;
 
     /* Muted backgrounds */
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 220 20% 15%;
+    --muted-foreground: 220 10% 60%;
 
-    /* Accent: Deep Sky Blue for icons/borders */
-    --accent: 201 96% 40%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent: Orange for highlights */
+    --accent: 25 95% 53%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders - subtle sky blue tint */
-    --border: 199 30% 88%;
-    --input: 199 30% 88%;
-    --ring: 199 89% 60%;
+    /* Borders - subtle dark */
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
+    --ring: 25 95% 53%;
 
     --radius: 0.75rem;
 
-    /* CTA Green: Fresh Growth Green #22C55E */
+    /* CTA Green: WhatsApp Green #22C55E */
     --whatsapp: 142 71% 45%;
     --whatsapp-foreground: 0 0% 100%;
     
-    /* Glows updated for sky-blue theme */
-    --glow-primary: 0 0 40px hsl(199 89% 60% / 0.25);
-    --glow-accent: 0 0 40px hsl(201 96% 40% / 0.25);
-    --glow-whatsapp: 0 0 30px hsl(142 71% 45% / 0.35);
+    /* Glows for dark theme */
+    --glow-primary: 0 0 40px hsl(25 95% 53% / 0.3);
+    --glow-accent: 0 0 40px hsl(25 95% 53% / 0.25);
+    --glow-whatsapp: 0 0 30px hsl(142 71% 45% / 0.4);
     
-    /* Gradients - sky blue conversion focused */
+    /* Gradients - dark professional */
     --gradient-primary: linear-gradient(135deg, hsl(142 71% 45%) 0%, hsl(142 76% 36%) 100%);
-    --gradient-sky: linear-gradient(135deg, hsl(199 89% 60%) 0%, hsl(201 96% 40%) 100%);
-    --gradient-dark: linear-gradient(180deg, hsl(201 96% 40%) 0%, hsl(201 96% 32%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(199 40% 98%) 100%);
-    --gradient-hero: radial-gradient(ellipse 80% 50% at 50% -20%, hsl(199 89% 60% / 0.15) 0%, transparent 50%);
+    --gradient-orange: linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(20 90% 45%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(220 20% 10%) 0%, hsl(220 20% 6%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(220 20% 14%) 0%, hsl(220 20% 10%) 100%);
+    --gradient-hero: radial-gradient(ellipse 80% 50% at 50% -20%, hsl(25 95% 53% / 0.1) 0%, transparent 50%);
 
-    /* Sidebar - Deep Sky Blue theme */
-    --sidebar-background: 201 96% 40%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 142 71% 45%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 201 96% 32%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 201 96% 50%;
-    --sidebar-ring: 199 89% 60%;
+    /* Sidebar - Dark theme */
+    --sidebar-background: 220 20% 10%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 25 95% 53%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 220 20% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 220 20% 20%;
+    --sidebar-ring: 25 95% 53%;
+  }
+
+  .dark {
+    /* Same as root - already dark */
   }
 
   .dark {
@@ -99,11 +103,15 @@
 @layer utilities {
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: var(--gradient-primary);
+    background-image: var(--gradient-orange);
   }
 
   .bg-gradient-primary {
     background-image: var(--gradient-primary);
+  }
+
+  .bg-gradient-orange {
+    background-image: var(--gradient-orange);
   }
 
   .bg-gradient-dark {
@@ -185,20 +193,20 @@
   }
 }
 
-/* Custom scrollbar - light theme */
+/* Custom scrollbar - dark theme */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(210 40% 96%);
+  background: hsl(220 20% 10%);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(215 16% 75%);
+  background: hsl(220 20% 25%);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(215 16% 60%);
+  background: hsl(220 20% 35%);
 }

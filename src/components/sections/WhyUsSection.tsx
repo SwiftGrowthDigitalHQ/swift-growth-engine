@@ -36,14 +36,14 @@ const reasons = [
 
 export function WhyUsSection() {
   return (
-    <section className="py-20 md:py-28 bg-secondary relative">
+    <section className="py-20 md:py-28 bg-card relative">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="max-w-3xl mx-auto text-center mb-16">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-6 text-secondary-foreground">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-6 text-foreground">
             Why <span className="text-primary">Swiftgrowthdigital</span>?
           </h2>
-          <p className="text-lg text-secondary-foreground/80">
+          <p className="text-lg text-muted-foreground">
             We're not like other agencies. Here's what makes us different.
           </p>
         </div>
@@ -53,16 +53,16 @@ export function WhyUsSection() {
           {reasons.map((reason, index) => (
             <div
               key={index}
-              className="flex gap-4 p-6 rounded-xl bg-secondary-foreground/10 border border-secondary-foreground/20 hover:bg-secondary-foreground/15 transition-colors"
+              className="flex gap-4 p-6 rounded-xl bg-secondary border border-border hover:border-primary/30 transition-colors"
             >
-              <div className="w-12 h-12 rounded-lg bg-primary/30 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                 <reason.icon className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-display font-semibold mb-2 text-secondary-foreground">
+                <h3 className="text-lg font-display font-semibold mb-2 text-foreground">
                   {reason.title}
                 </h3>
-                <p className="text-sm text-secondary-foreground/70 leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   {reason.description}
                 </p>
               </div>
