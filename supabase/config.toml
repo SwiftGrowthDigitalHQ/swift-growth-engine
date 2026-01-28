@@ -5,3 +5,8 @@ verify_jwt = false
 
 [functions.submit-lead]
 verify_jwt = false
+
+# WhatsApp Service - Future-ready API integration
+# Activate by adding: WHATSAPP_PROVIDER, WHATSAPP_API_KEY, WHATSAPP_SENDER_ID, WHATSAPP_TEMPLATE_ID
+[functions.whatsapp-service]
+verify_jwt = false
