@@ -4,7 +4,6 @@ import { Menu, X, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SoundToggle } from "@/components/SoundToggle";
 import { useSound } from "@/hooks/use-sound";
-import logo from "@/assets/logo.png";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -44,12 +43,10 @@ export function Navbar() {
       <div className="container mx-auto px-4">
         <div className={`flex items-center justify-between transition-all duration-300 ${isScrolled ? "h-14" : "h-16 md:h-20"}`}>
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <img 
-              src={logo} 
-              alt="Swiftgrowth Digital" 
-              className={`transition-all duration-300 ${isScrolled ? "h-8" : "h-10 md:h-12"}`}
-            />
+          <Link to="/" className="flex items-center gap-2">
+            <span className="text-xl md:text-2xl font-display font-bold">
+              <span className="text-primary">Swiftgrowth</span><span className="text-foreground">digital</span>
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
