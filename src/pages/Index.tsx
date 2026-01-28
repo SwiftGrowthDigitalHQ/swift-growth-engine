@@ -1,8 +1,6 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { WhatsAppWidget } from "@/components/WhatsAppWidget";
-import { SwiftBot } from "@/components/SwiftBot";
+import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { ServicesSection } from "@/components/sections/ServicesSection";
 import { WhyUsSection } from "@/components/sections/WhyUsSection";
@@ -23,9 +21,7 @@ const Index = () => {
         <CTASection />
       </main>
       <Footer />
-      <WhatsAppButton />
-      <WhatsAppWidget />
-      <SwiftBot />
+      <UnifiedChatWidget />
     </div>
   );
 };

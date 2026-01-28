@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
 
 const PrivacyPolicy = () => {
   return (
@@ -98,6 +99,7 @@ const PrivacyPolicy = () => {
         </section>
       </main>
       <Footer />
+      <UnifiedChatWidget />
     </div>
   );
 };
