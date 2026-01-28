@@ -99,20 +99,19 @@ export function Footer() {
             <h4 className="font-display font-semibold text-foreground">Industries</h4>
             <div className="flex flex-col gap-2">
               <Link to="/clinic-marketing" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                Clinic Marketing
+                Clinic & Healthcare
               </Link>
               <Link to="/real-estate-marketing" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                Real Estate Marketing
+                Real Estate
               </Link>
               <Link to="/restaurant-marketing" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Restaurant & Cloud Kitchen
               </Link>
-              <Link to="/testimonials" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                Testimonials
-              </Link>
-              <Link to="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                Privacy Policy
-              </Link>
+              <span className="text-muted-foreground text-sm">Local Businesses</span>
+              <span className="text-muted-foreground text-sm">Education & Coaching</span>
+              <span className="text-muted-foreground text-sm">Salon & Beauty</span>
+              <span className="text-muted-foreground text-sm">Service Businesses</span>
+              <span className="text-muted-foreground text-sm">E-commerce & Shopify</span>
             </div>
           </div>
 
