@@ -107,11 +107,21 @@ export function Footer() {
               <Link to="/restaurant-marketing" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Restaurant & Cloud Kitchen
               </Link>
-              <span className="text-muted-foreground text-sm">Local Businesses</span>
-              <span className="text-muted-foreground text-sm">Education & Coaching</span>
-              <span className="text-muted-foreground text-sm">Salon & Beauty</span>
-              <span className="text-muted-foreground text-sm">Service Businesses</span>
-              <span className="text-muted-foreground text-sm">E-commerce & Shopify</span>
+              <Link to="/local-business-marketing" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Local Businesses
+              </Link>
+              <Link to="/education-marketing" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Education & Coaching
+              </Link>
+              <Link to="/salon-marketing" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Salon & Beauty
+              </Link>
+              <Link to="/service-business-marketing" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Service Businesses
+              </Link>
+              <Link to="/ecommerce-marketing" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                E-commerce & Shopify
+              </Link>
             </div>
           </div>
 
