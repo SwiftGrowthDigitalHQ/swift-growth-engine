@@ -3,6 +3,7 @@ import { X, Send, Bot, User, Loader2, Sparkles, ArrowRight, MessageSquare } from
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { trackConversion } from "@/lib/analytics";
+import { useSound } from "@/hooks/use-sound";
 
 type Message = {
   role: "user" | "assistant";
@@ -45,6 +46,7 @@ type QualificationStep = "initial" | "business" | "goal" | "qualified" | null;
 export function UnifiedChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasShownAutoOpen, setHasShownAutoOpen] = useState(false);
+  const { playPop, playWhoosh } = useSound();
   const [qualificationStep, setQualificationStep] = useState<QualificationStep>("initial");
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -80,7 +82,13 @@ export function UnifiedChatWidget() {
 
   const handleOpen = () => {
     setIsOpen(true);
+    playPop();
     trackConversion.whatsappChatStart("manual_open");
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    playWhoosh();
   };
 
   const streamChat = useCallback(async (userMessages: Message[]) => {
@@ -295,7 +303,7 @@ export function UnifiedChatWidget() {
               </div>
             </div>
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={handleClose}
               className="p-2 hover:bg-primary-foreground/10 rounded-lg transition-colors"
             >
               <X className="w-5 h-5" />
