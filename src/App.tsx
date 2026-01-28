@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import { SoundProvider } from "@/hooks/use-sound";
+import { ScrollProgressIndicator } from "@/components/ScrollProgressIndicator";
 import Index from "./pages/Index";
 import Services from "./pages/Services";
 import Pricing from "./pages/Pricing";
@@ -35,6 +36,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AnalyticsScripts />
+          <ScrollProgressIndicator />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/services" element={<Services />} />
