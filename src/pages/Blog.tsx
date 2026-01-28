@@ -4,6 +4,7 @@ import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
 import { ArrowRight, Calendar, Clock, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { AnimatedSection } from "@/hooks/use-scroll-animation";
 
 const blogPosts = [
   {
@@ -87,7 +88,7 @@ const Blog = () => {
         <section className="py-16 md:py-24 relative">
           <div className="absolute inset-0 bg-hero-glow opacity-50" />
           <div className="container mx-auto px-4 relative z-10">
-            <div className="max-w-3xl mx-auto text-center">
+            <AnimatedSection className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6">
                 Digital Marketing <span className="text-gradient">Insights</span>
               </h1>
@@ -95,7 +96,7 @@ const Blog = () => {
                 Tips, guides, and strategies for growing your local business online.
                 Written by Sonu for Indian business owners.
               </p>
-            </div>
+            </AnimatedSection>
           </div>
         </section>
 
@@ -123,52 +124,51 @@ const Blog = () => {
         <section className="py-16 md:py-20">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {blogPosts.map((post) => (
-                <article
-                  key={post.slug}
-                  className="group bg-card rounded-2xl border border-border overflow-hidden hover:border-primary/50 transition-all duration-300"
-                >
-                  <div className="aspect-video bg-secondary relative overflow-hidden">
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute top-4 left-4">
-                      <span className="px-3 py-1 bg-primary/90 text-primary-foreground text-xs font-medium rounded-full">
-                        {post.category}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                      <div className="flex items-center gap-1">
-                        <User className="w-4 h-4" />
-                        <span>{post.author}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{new Date(post.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{post.readTime}</span>
+              {blogPosts.map((post, index) => (
+                <AnimatedSection key={post.slug} delay={index * 100}>
+                  <article className="group bg-card rounded-2xl border border-border overflow-hidden hover:border-primary/50 transition-all duration-300 h-full">
+                    <div className="aspect-video bg-secondary relative overflow-hidden">
+                      <img
+                        src={post.image}
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-4 left-4">
+                        <span className="px-3 py-1 bg-primary/90 text-primary-foreground text-xs font-medium rounded-full">
+                          {post.category}
+                        </span>
                       </div>
                     </div>
-                    <h2 className="text-xl font-display font-semibold mb-3 text-foreground group-hover:text-primary transition-colors">
-                      {post.title}
-                    </h2>
-                    <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                      {post.excerpt}
-                    </p>
-                    <Link
-                      to={`/blog/${post.slug}`}
-                      className="inline-flex items-center gap-2 text-primary font-medium text-sm hover:gap-3 transition-all"
-                    >
-                      Read More <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </article>
+                    <div className="p-6">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                        <div className="flex items-center gap-1">
+                          <User className="w-4 h-4" />
+                          <span>{post.author}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>{new Date(post.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          <span>{post.readTime}</span>
+                        </div>
+                      </div>
+                      <h2 className="text-xl font-display font-semibold mb-3 text-foreground group-hover:text-primary transition-colors">
+                        {post.title}
+                      </h2>
+                      <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                        {post.excerpt}
+                      </p>
+                      <Link
+                        to={`/blog/${post.slug}`}
+                        className="inline-flex items-center gap-2 text-primary font-medium text-sm hover:gap-3 transition-all"
+                      >
+                        Read More <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    </div>
+                  </article>
+                </AnimatedSection>
               ))}
             </div>
 
@@ -185,7 +185,7 @@ const Blog = () => {
         {/* Newsletter CTA */}
         <section className="py-16 bg-card border-y border-border">
           <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto text-center">
+            <AnimatedSection className="max-w-2xl mx-auto text-center">
               <h2 className="text-2xl md:text-3xl font-display font-bold mb-4">
                 Get Marketing Tips on WhatsApp
               </h2>
@@ -202,7 +202,7 @@ const Blog = () => {
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </a>
-            </div>
+            </AnimatedSection>
           </div>
         </section>
       </main>

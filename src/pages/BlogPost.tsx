@@ -5,6 +5,7 @@ import { UnifiedChatWidget } from '@/components/UnifiedChatWidget';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Calendar, Clock, User, Share2, MessageCircle } from 'lucide-react';
 import { trackConversion } from '@/lib/analytics';
+import { AnimatedSection } from '@/hooks/use-scroll-animation';
 
 // Blog posts data with full content
 const blogPostsData: Record<string, {
@@ -476,7 +477,7 @@ const BlogPost = () => {
               Back to Blog
             </Link>
 
-            <div className="max-w-3xl">
+            <AnimatedSection className="max-w-3xl">
               <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full mb-4">
                 {post.category}
               </span>
@@ -503,7 +504,7 @@ const BlogPost = () => {
                   <span>{post.readTime}</span>
                 </div>
               </div>
-            </div>
+            </AnimatedSection>
           </div>
         </section>
 
@@ -512,7 +513,8 @@ const BlogPost = () => {
           <div className="container mx-auto px-4">
             <div className="grid lg:grid-cols-3 gap-12">
               {/* Article */}
-              <article className="lg:col-span-2">
+              <AnimatedSection className="lg:col-span-2" delay={100}>
+                <article>
                 <div className="aspect-video rounded-2xl bg-secondary mb-8 overflow-hidden">
                   <img
                     src={post.image}
@@ -593,10 +595,12 @@ const BlogPost = () => {
                     </Button>
                   </div>
                 </div>
-              </article>
+                </article>
+              </AnimatedSection>
 
               {/* Sidebar */}
-              <aside className="space-y-8">
+              <AnimatedSection delay={200} direction="right">
+                <aside className="space-y-8">
                 {/* CTA */}
                 <div className="bg-gradient-card rounded-2xl border border-primary/30 p-6">
                   <h3 className="text-lg font-display font-bold mb-3">
@@ -637,7 +641,8 @@ const BlogPost = () => {
                     </div>
                   </div>
                 )}
-              </aside>
+                </aside>
+              </AnimatedSection>
             </div>
           </div>
         </section>
@@ -645,7 +650,7 @@ const BlogPost = () => {
         {/* CTA Section */}
         <section className="py-16 bg-card border-t border-border">
           <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto text-center">
+            <AnimatedSection className="max-w-2xl mx-auto text-center">
               <h2 className="text-2xl md:text-3xl font-display font-bold mb-4">
                 Ready to Implement These Strategies?
               </h2>
@@ -669,7 +674,7 @@ const BlogPost = () => {
                   </Button>
                 </Link>
               </div>
-            </div>
+            </AnimatedSection>
           </div>
         </section>
       </main>
