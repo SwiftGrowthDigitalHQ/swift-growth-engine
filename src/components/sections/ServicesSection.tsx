@@ -7,6 +7,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AnimatedSection } from "@/hooks/use-scroll-animation";
 
 const services = [
   {
@@ -41,7 +42,7 @@ export function ServicesSection() {
     <section className="py-20 md:py-28 relative bg-background">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="max-w-3xl mx-auto text-center mb-16">
+        <AnimatedSection className="max-w-3xl mx-auto text-center mb-16">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-6 text-foreground">
             Complete <span className="bg-gradient-orange bg-clip-text text-transparent">Growth Solutions</span>
           </h2>
@@ -49,37 +50,39 @@ export function ServicesSection() {
             Everything your business needs to get more customers online. 
             We handle the technical stuff, you focus on your business.
           </p>
-        </div>
+        </AnimatedSection>
 
         {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {services.map((service, index) => (
-            <div
+            <AnimatedSection
               key={index}
-              className="group p-6 md:p-8 rounded-2xl bg-card border border-border card-glow hover-lift"
+              delay={index * 100}
             >
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
-                <service.icon className="w-6 h-6 text-primary" />
+              <div className="group p-6 md:p-8 rounded-2xl bg-card border border-border card-glow hover-lift h-full">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
+                  <service.icon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-xl font-display font-semibold mb-3 text-foreground group-hover:text-primary transition-colors duration-300">
+                  {service.title}
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  {service.description}
+                </p>
               </div>
-              <h3 className="text-xl font-display font-semibold mb-3 text-foreground group-hover:text-primary transition-colors duration-300">
-                {service.title}
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {service.description}
-              </p>
-            </div>
+            </AnimatedSection>
           ))}
         </div>
 
         {/* CTA */}
-        <div className="text-center mt-12">
+        <AnimatedSection className="text-center mt-12" delay={500}>
           <a href="/services">
             <Button variant="outline" size="lg">
               View All Services
               <ArrowRight className="w-4 h-4" />
             </Button>
           </a>
-        </div>
+        </AnimatedSection>
       </div>
     </section>
   );
