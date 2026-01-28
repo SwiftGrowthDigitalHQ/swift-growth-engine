@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
+import { PageTransition } from "@/components/PageTransition";
 import { Star, Quote, MessageCircle, ArrowRight, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TestimonialCarousel } from "@/components/TestimonialCarousel";
@@ -146,7 +147,8 @@ const Testimonials = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pt-20">
+      <PageTransition>
+        <main className="pt-20">
         {/* Hero Section */}
         <section className="py-16 md:py-24 relative">
           <div className="absolute inset-0 bg-hero-glow opacity-50" />
@@ -336,6 +338,7 @@ const Testimonials = () => {
           </div>
         </section>
       </main>
+      </PageTransition>
       <Footer />
       <UnifiedChatWidget />
     </div>

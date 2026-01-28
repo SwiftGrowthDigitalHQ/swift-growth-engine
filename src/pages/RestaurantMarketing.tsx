@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
+import { PageTransition } from "@/components/PageTransition";
 import { ParallaxHero } from "@/components/ParallaxHero";
 import { Check, ArrowRight, MessageCircle, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,8 @@ const RestaurantMarketing = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pt-20">
+      <PageTransition>
+        <main className="pt-20">
         {/* Hero */}
         <ParallaxHero className="py-16 md:py-24">
           <div className="container mx-auto px-4">
@@ -148,6 +150,7 @@ const RestaurantMarketing = () => {
           </div>
         </section>
       </main>
+      </PageTransition>
       <Footer />
       <UnifiedChatWidget />
     </div>
