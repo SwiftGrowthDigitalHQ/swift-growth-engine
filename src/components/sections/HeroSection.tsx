@@ -1,17 +1,26 @@
 import { ArrowRight, MessageCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSound } from "@/hooks/use-sound";
+import { useParallax } from "@/hooks/use-parallax";
 
 export function HeroSection() {
   const { playClick, playTap } = useSound();
   const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I%20want%20to%20grow%20my%20business";
+  const parallaxSlow = useParallax(0.15);
+  const parallaxMedium = useParallax(0.25);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden bg-gradient-dark">
-      {/* Background Glow - orange accent */}
+      {/* Background Glow - orange accent with parallax */}
       <div className="absolute inset-0 bg-hero-glow" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
+      <div 
+        className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl transition-transform duration-100"
+        style={{ transform: `translateY(${parallaxSlow}px)` }}
+      />
+      <div 
+        className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-primary/5 rounded-full blur-3xl transition-transform duration-100"
+        style={{ transform: `translateY(${parallaxMedium}px)` }}
+      />
       
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center animate-slide-up">
