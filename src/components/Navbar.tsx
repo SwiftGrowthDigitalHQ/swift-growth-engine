@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SoundToggle } from "@/components/SoundToggle";
+import { useSound } from "@/hooks/use-sound";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -17,8 +19,14 @@ const navLinks = [
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { playTap, playClick } = useSound();
 
   const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I%20want%20to%20grow%20my%20business";
+
+  const handleMenuToggle = () => {
+    playTap();
+    setIsOpen(!isOpen);
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border">
@@ -49,7 +57,8 @@ export function Navbar() {
           </div>
 
           {/* CTA Buttons */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-2">
+            <SoundToggle />
             <a href="tel:+919229721835">
               <Button variant="ghost" size="sm">
                 <Phone className="w-4 h-4" />
@@ -57,7 +66,7 @@ export function Navbar() {
               </Button>
             </a>
             <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-              <Button variant="whatsapp" size="sm">
+              <Button variant="whatsapp" size="sm" onClick={playClick}>
                 WhatsApp Now
               </Button>
             </a>
@@ -66,7 +75,7 @@ export function Navbar() {
           {/* Mobile Menu Button */}
           <button
             className="lg:hidden p-2 text-foreground"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={handleMenuToggle}
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -85,12 +94,16 @@ export function Navbar() {
                       ? "text-primary"
                       : "text-muted-foreground"
                   }`}
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    playTap();
+                    setIsOpen(false);
+                  }}
                 >
                   {link.label}
                 </Link>
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
+                <SoundToggle />
                 <a href="tel:+919229721835">
                   <Button variant="outline" className="w-full">
                     <Phone className="w-4 h-4" />
@@ -98,7 +111,7 @@ export function Navbar() {
                   </Button>
                 </a>
                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                  <Button variant="whatsapp" className="w-full">
+                  <Button variant="whatsapp" className="w-full" onClick={playClick}>
                     WhatsApp Now
                   </Button>
                 </a>

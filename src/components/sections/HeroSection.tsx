@@ -1,7 +1,9 @@
 import { ArrowRight, MessageCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSound } from "@/hooks/use-sound";
 
 export function HeroSection() {
+  const { playClick, playTap } = useSound();
   const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I%20want%20to%20grow%20my%20business";
 
   return (
@@ -40,13 +42,13 @@ export function HeroSection() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-              <Button variant="whatsapp" size="xl">
+              <Button variant="whatsapp" size="xl" onClick={playClick}>
                 <MessageCircle className="w-5 h-5" />
                 WhatsApp Now
               </Button>
             </a>
             <a href="/free-audit">
-              <Button variant="hero" size="xl">
+              <Button variant="hero" size="xl" onClick={playTap}>
                 Get Free Growth Audit
                 <ArrowRight className="w-5 h-5" />
               </Button>
