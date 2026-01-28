@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { SwiftBot } from "@/components/SwiftBot";
+import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
 import { Gift, Check, ArrowRight, MessageCircle, Loader2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackConversion } from "@/lib/analytics";
@@ -245,8 +244,7 @@ const FreeAudit = () => {
         </section>
       </main>
       <Footer />
-      <WhatsAppButton />
-      <SwiftBot />
+      <UnifiedChatWidget />
     </div>
   );
 };

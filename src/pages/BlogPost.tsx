@@ -1,8 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { WhatsAppButton } from '@/components/WhatsAppButton';
-import { SwiftBot } from '@/components/SwiftBot';
+import { UnifiedChatWidget } from '@/components/UnifiedChatWidget';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Calendar, Clock, User, Share2, MessageCircle } from 'lucide-react';
 import { trackConversion } from '@/lib/analytics';
@@ -675,8 +674,7 @@ const BlogPost = () => {
         </section>
       </main>
       <Footer />
-      <WhatsAppButton />
-      <SwiftBot />
+      <UnifiedChatWidget />
     </div>
   );
 };

@@ -1,8 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { SwiftBot } from "@/components/SwiftBot";
-import { ArrowRight, TrendingUp, Phone, Users, MessageCircle, Play } from "lucide-react";
+import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
+import { TrendingUp, Phone, Users, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { VideoTestimonial } from "@/components/VideoTestimonial";
@@ -37,9 +36,11 @@ const caseStudies = [
     },
     quote: "Swiftgrowthdigital transformed our practice. We now have a steady stream of patients and our revenue has doubled in 6 months.",
     duration: "6 months",
-    beforeImage: "/placeholder.svg",
-    afterImage: "/placeholder.svg",
-    videoId: "dQw4w9WgXcQ", // Placeholder - replace with actual testimonial video
+    // Note: Replace with actual before/after screenshots when available
+    beforeImage: null,
+    afterImage: null,
+    // Note: Replace with actual client testimonial video ID
+    videoId: null,
   },
   {
     id: "real-estate-bangalore",
@@ -70,8 +71,8 @@ const caseStudies = [
     },
     quote: "The quality of leads improved dramatically. Our sales team now closes 3x more deals with the same effort.",
     duration: "4 months",
-    beforeImage: "/placeholder.svg",
-    afterImage: "/placeholder.svg",
+    beforeImage: null,
+    afterImage: null,
     videoId: null,
   },
   {
@@ -103,9 +104,9 @@ const caseStudies = [
     },
     quote: "Our direct orders went from 40% to 70%. The savings on commission alone pays for the entire marketing budget!",
     duration: "5 months",
-    beforeImage: "/placeholder.svg",
-    afterImage: "/placeholder.svg",
-    videoId: "dQw4w9WgXcQ", // Placeholder
+    beforeImage: null,
+    afterImage: null,
+    videoId: null,
   },
 ];
 
@@ -140,7 +141,7 @@ const CaseStudies = () => {
         <section className="py-16 md:py-20">
           <div className="container mx-auto px-4">
             <div className="space-y-20">
-              {caseStudies.map((study, index) => (
+              {caseStudies.map((study) => (
                 <div
                   key={study.id}
                   className="bg-card rounded-3xl border border-border overflow-hidden"
@@ -184,18 +185,20 @@ const CaseStudies = () => {
                         </div>
                       </div>
 
-                      {/* Right Column - Results & Media */}
+                      {/* Right Column - Results */}
                       <div className="space-y-6">
-                        {/* Before/After Slider */}
-                        <div>
-                          <h3 className="text-lg font-display font-semibold text-foreground mb-4">Visual Results</h3>
-                          <BeforeAfterSlider
-                            beforeImage={study.beforeImage}
-                            afterImage={study.afterImage}
-                            beforeLabel="Before"
-                            afterLabel="After"
-                          />
-                        </div>
+                        {/* Before/After Slider - Only show if images exist */}
+                        {study.beforeImage && study.afterImage && (
+                          <div>
+                            <h3 className="text-lg font-display font-semibold text-foreground mb-4">Visual Results</h3>
+                            <BeforeAfterSlider
+                              beforeImage={study.beforeImage}
+                              afterImage={study.afterImage}
+                              beforeLabel="Before"
+                              afterLabel="After"
+                            />
+                          </div>
+                        )}
 
                         {/* Metrics Comparison */}
                         <div>
@@ -246,8 +249,8 @@ const CaseStudies = () => {
                       </div>
                     </div>
 
-                    {/* Video Testimonial & Quote */}
-                    <div className="grid md:grid-cols-2 gap-6 mt-8 pt-8 border-t border-border">
+                    {/* Quote & Video */}
+                    <div className={`grid ${study.videoId ? 'md:grid-cols-2' : ''} gap-6 mt-8 pt-8 border-t border-border`}>
                       {/* Quote */}
                       <div className="bg-secondary/30 rounded-xl p-6 border-l-4 border-primary">
                         <p className="text-foreground italic mb-3">"{study.quote}"</p>
@@ -257,7 +260,7 @@ const CaseStudies = () => {
                         </p>
                       </div>
 
-                      {/* Video Testimonial */}
+                      {/* Video Testimonial - Only show if video exists */}
                       {study.videoId && (
                         <VideoTestimonial
                           videoId={study.videoId}
@@ -270,6 +273,13 @@ const CaseStudies = () => {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Note for adding real content */}
+            <div className="mt-12 p-6 bg-secondary/30 rounded-xl border border-border text-center">
+              <p className="text-sm text-muted-foreground">
+                📸 <strong className="text-foreground">Ready to add your success story?</strong> Upload before/after screenshots and video testimonials to showcase real results.
+              </p>
             </div>
           </div>
         </section>
@@ -296,8 +306,7 @@ const CaseStudies = () => {
         </section>
       </main>
       <Footer />
-      <WhatsAppButton />
-      <SwiftBot />
+      <UnifiedChatWidget />
     </div>
   );
 };
