@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
+import { PageTransition } from "@/components/PageTransition";
 import { ContactForm } from "@/components/ContactForm";
 import { Phone, Mail, MapPin, MessageCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,8 @@ const Contact = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pt-20">
+      <PageTransition>
+        <main className="pt-20">
         {/* Hero */}
         <section className="py-16 md:py-24 relative">
           <div className="absolute inset-0 bg-hero-glow" />
@@ -202,6 +204,7 @@ const Contact = () => {
           </div>
         </section>
       </main>
+      </PageTransition>
       <Footer />
       <UnifiedChatWidget />
     </div>

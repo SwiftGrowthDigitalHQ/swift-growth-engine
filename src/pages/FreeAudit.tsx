@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
+import { PageTransition } from "@/components/PageTransition";
 import { Gift, Check, ArrowRight, MessageCircle, Loader2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackConversion } from "@/lib/analytics";
@@ -83,7 +84,8 @@ const FreeAudit = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pt-20">
+      <PageTransition>
+        <main className="pt-20">
         {/* Hero */}
         <section className="py-16 md:py-24 relative overflow-hidden">
           <div className="absolute inset-0 bg-hero-glow" />
@@ -246,6 +248,7 @@ const FreeAudit = () => {
           </div>
         </section>
       </main>
+      </PageTransition>
       <Footer />
       <UnifiedChatWidget />
     </div>
