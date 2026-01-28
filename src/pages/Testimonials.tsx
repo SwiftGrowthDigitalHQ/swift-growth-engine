@@ -6,6 +6,7 @@ import { Star, Quote, MessageCircle, ArrowRight, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TestimonialCarousel } from "@/components/TestimonialCarousel";
 import { VideoTestimonial } from "@/components/VideoTestimonial";
+import { AnimatedSection } from "@/hooks/use-scroll-animation";
 
 const testimonials = [
   // Clinic Testimonials
@@ -150,7 +151,7 @@ const Testimonials = () => {
         <section className="py-16 md:py-24 relative">
           <div className="absolute inset-0 bg-hero-glow opacity-50" />
           <div className="container mx-auto px-4 relative z-10">
-            <div className="max-w-3xl mx-auto text-center">
+            <AnimatedSection className="max-w-3xl mx-auto text-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border mb-6">
                 <Star className="w-4 h-4 text-primary fill-primary" />
                 <span className="text-sm font-medium text-muted-foreground">100+ Happy Clients</span>
@@ -161,19 +162,21 @@ const Testimonials = () => {
               <p className="text-lg md:text-xl text-muted-foreground">
                 Real reviews from real business owners. See what they say about working with Swiftgrowthdigital.
               </p>
-            </div>
+            </AnimatedSection>
           </div>
         </section>
 
         {/* Featured Carousel */}
         <section className="py-12 md:py-16 border-b border-border">
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-display font-bold text-center mb-8">Featured Reviews</h2>
-            <TestimonialCarousel 
-              testimonials={testimonials.slice(0, 5)} 
-              autoPlay={true}
-              interval={6000}
-            />
+            <AnimatedSection>
+              <h2 className="text-2xl font-display font-bold text-center mb-8">Featured Reviews</h2>
+              <TestimonialCarousel 
+                testimonials={testimonials.slice(0, 5)} 
+                autoPlay={true}
+                interval={6000}
+              />
+            </AnimatedSection>
           </div>
         </section>
 
@@ -181,7 +184,7 @@ const Testimonials = () => {
         {hasVideoTestimonials && (
           <section className="py-16 md:py-20 bg-card">
             <div className="container mx-auto px-4">
-              <div className="text-center mb-12">
+              <AnimatedSection className="text-center mb-12">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border mb-4">
                   <Play className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium text-muted-foreground">Video Testimonials</span>
@@ -192,16 +195,17 @@ const Testimonials = () => {
                 <p className="text-muted-foreground max-w-2xl mx-auto">
                   Watch real business owners share their growth journey with Swiftgrowthdigital
                 </p>
-              </div>
+              </AnimatedSection>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {videoTestimonials.filter(v => v.videoId).map((video, index) => (
-                  <VideoTestimonial
-                    key={index}
-                    videoId={video.videoId!}
-                    title={video.title}
-                    clientName={video.clientName}
-                    business={video.business}
-                  />
+                  <AnimatedSection key={index} delay={index * 100}>
+                    <VideoTestimonial
+                      videoId={video.videoId!}
+                      title={video.title}
+                      clientName={video.clientName}
+                      business={video.business}
+                    />
+                  </AnimatedSection>
                 ))}
               </div>
             </div>
@@ -211,7 +215,7 @@ const Testimonials = () => {
         {/* Categories Filter */}
         <section className="py-8 border-b border-border">
           <div className="container mx-auto px-4">
-            <div className="flex flex-wrap gap-3 justify-center">
+            <AnimatedSection className="flex flex-wrap gap-3 justify-center">
               {categories.map((category) => (
                 <button
                   key={category}
@@ -225,7 +229,7 @@ const Testimonials = () => {
                   {category}
                 </button>
               ))}
-            </div>
+            </AnimatedSection>
           </div>
         </section>
 
@@ -234,52 +238,51 @@ const Testimonials = () => {
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTestimonials.map((testimonial, index) => (
-                <div
-                  key={index}
-                  className="bg-card rounded-2xl border border-border p-6 hover:border-primary/30 transition-all duration-300"
-                >
-                  {/* Client Info */}
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-14 h-14 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground font-semibold">
-                      {testimonial.avatar}
+                <AnimatedSection key={index} delay={index * 50}>
+                  <div className="bg-card rounded-2xl border border-border p-6 hover:border-primary/30 transition-all duration-300 h-full">
+                    {/* Client Info */}
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-14 h-14 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground font-semibold">
+                        {testimonial.avatar}
+                      </div>
+                      <div>
+                        <p className="font-display font-semibold text-foreground">
+                          {testimonial.name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {testimonial.business}, {testimonial.location}
+                        </p>
+                      </div>
                     </div>
+
+                    {/* Quote Icon */}
+                    <Quote className="w-8 h-8 text-primary/30 mb-4" />
+
+                    {/* Review */}
+                    <p className="text-muted-foreground leading-relaxed mb-6">
+                      "{testimonial.review}"
+                    </p>
+
+                    {/* Result Badge */}
+                    <div className="inline-block px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full mb-4">
+                      ✓ {testimonial.result}
+                    </div>
+
+                    {/* Rating */}
+                    <div className="flex gap-1 mb-4">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Star key={i} className="w-4 h-4 text-primary fill-primary" />
+                      ))}
+                    </div>
+
+                    {/* Category Tag */}
                     <div>
-                      <p className="font-display font-semibold text-foreground">
-                        {testimonial.name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {testimonial.business}, {testimonial.location}
-                      </p>
+                      <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                        {testimonial.category}
+                      </span>
                     </div>
                   </div>
-
-                  {/* Quote Icon */}
-                  <Quote className="w-8 h-8 text-primary/30 mb-4" />
-
-                  {/* Review */}
-                  <p className="text-muted-foreground leading-relaxed mb-6">
-                    "{testimonial.review}"
-                  </p>
-
-                  {/* Result Badge */}
-                  <div className="inline-block px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full mb-4">
-                    ✓ {testimonial.result}
-                  </div>
-
-                  {/* Rating */}
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 text-primary fill-primary" />
-                    ))}
-                  </div>
-
-                  {/* Category Tag */}
-                  <div>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                      {testimonial.category}
-                    </span>
-                  </div>
-                </div>
+                </AnimatedSection>
               ))}
             </div>
           </div>
@@ -289,22 +292,17 @@ const Testimonials = () => {
         <section className="py-16 bg-card border-y border-border">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <p className="text-4xl md:text-5xl font-display font-bold text-gradient mb-2">100+</p>
-                <p className="text-muted-foreground">Happy Clients</p>
-              </div>
-              <div className="text-center">
-                <p className="text-4xl md:text-5xl font-display font-bold text-gradient mb-2">₹10Cr+</p>
-                <p className="text-muted-foreground">Revenue Generated</p>
-              </div>
-              <div className="text-center">
-                <p className="text-4xl md:text-5xl font-display font-bold text-gradient mb-2">50K+</p>
-                <p className="text-muted-foreground">Leads Delivered</p>
-              </div>
-              <div className="text-center">
-                <p className="text-4xl md:text-5xl font-display font-bold text-gradient mb-2">4.9</p>
-                <p className="text-muted-foreground">Average Rating</p>
-              </div>
+              {[
+                { value: "100+", label: "Happy Clients" },
+                { value: "₹10Cr+", label: "Revenue Generated" },
+                { value: "50K+", label: "Leads Delivered" },
+                { value: "4.9", label: "Average Rating" },
+              ].map((stat, i) => (
+                <AnimatedSection key={i} delay={i * 100} className="text-center">
+                  <p className="text-4xl md:text-5xl font-display font-bold text-gradient mb-2">{stat.value}</p>
+                  <p className="text-muted-foreground">{stat.label}</p>
+                </AnimatedSection>
+              ))}
             </div>
           </div>
         </section>
@@ -312,7 +310,7 @@ const Testimonials = () => {
         {/* CTA Section */}
         <section className="py-16 md:py-24">
           <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center">
+            <AnimatedSection className="max-w-3xl mx-auto text-center">
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-6">
                 Ready to Be Our Next Success Story?
               </h2>
@@ -334,7 +332,7 @@ const Testimonials = () => {
                   </Button>
                 </a>
               </div>
-            </div>
+            </AnimatedSection>
           </div>
         </section>
       </main>
