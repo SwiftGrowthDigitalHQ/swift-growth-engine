@@ -7,6 +7,7 @@ interface SoundContextType {
   playTap: () => void;
   playPop: () => void;
   playWhoosh: () => void;
+  playNotification: () => void;
 }
 
 const SoundContext = createContext<SoundContextType | undefined>(undefined);
@@ -79,6 +80,12 @@ const playWhooshSound = () => {
   setTimeout(() => playTone(350, 0.1, 'sine', VOLUME * 0.4), 50);
 };
 
+// Notification - friendly double-chime for bot responses
+const playNotificationSound = () => {
+  playTone(880, 0.1, 'sine', VOLUME * 0.7);
+  setTimeout(() => playTone(1100, 0.12, 'sine', VOLUME * 0.6), 100);
+};
+
 export function SoundProvider({ children }: { children: ReactNode }) {
   const [soundEnabled, setSoundEnabled] = useState(false);
 
@@ -120,6 +127,10 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     if (soundEnabled) playWhooshSound();
   }, [soundEnabled]);
 
+  const playNotification = useCallback(() => {
+    if (soundEnabled) playNotificationSound();
+  }, [soundEnabled]);
+
   return (
     <SoundContext.Provider value={{
       soundEnabled,
@@ -128,6 +139,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       playTap,
       playPop,
       playWhoosh,
+      playNotification,
     }}>
       {children}
     </SoundContext.Provider>
