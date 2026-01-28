@@ -1,5 +1,6 @@
 import { ArrowRight, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AnimatedSection } from "@/hooks/use-scroll-animation";
 
 export function CTASection() {
   return (
@@ -8,7 +9,7 @@ export function CTASection() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/10 rounded-full blur-3xl" />
       
       <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-3xl mx-auto text-center">
+        <AnimatedSection className="max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
             <Gift className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium text-primary">Limited Time Offer</span>
@@ -35,7 +36,7 @@ export function CTASection() {
           <p className="mt-6 text-sm text-muted-foreground">
             No payment required. No obligations. Just pure value.
           </p>
-        </div>
+        </AnimatedSection>
       </div>
     </section>
   );
