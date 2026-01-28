@@ -38,12 +38,12 @@ const services = [
 
 export function ServicesSection() {
   return (
-    <section className="py-20 md:py-28 relative bg-card">
+    <section className="py-20 md:py-28 relative bg-background">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="max-w-3xl mx-auto text-center mb-16">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-6 text-foreground">
-            Complete <span className="bg-gradient-sky bg-clip-text text-transparent">Growth Solutions</span>
+            Complete <span className="bg-gradient-orange bg-clip-text text-transparent">Growth Solutions</span>
           </h2>
           <p className="text-lg text-muted-foreground">
             Everything your business needs to get more customers online. 
@@ -56,10 +56,10 @@ export function ServicesSection() {
           {services.map((service, index) => (
             <div
               key={index}
-              className="group p-6 md:p-8 rounded-2xl bg-background border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+              className="group p-6 md:p-8 rounded-2xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
             >
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
-                <service.icon className="w-6 h-6 text-secondary" />
+                <service.icon className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-xl font-display font-semibold mb-3 text-foreground">
                 {service.title}
