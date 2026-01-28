@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
+import { ParallaxHero } from "@/components/ParallaxHero";
 import { Check, ArrowRight, MessageCircle, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
@@ -36,9 +37,8 @@ const ClinicMarketing = () => {
       <Navbar />
       <main className="pt-20">
         {/* Hero */}
-        <section className="py-16 md:py-24 relative overflow-hidden">
-          <div className="absolute inset-0 bg-hero-glow" />
-          <div className="container mx-auto px-4 relative z-10">
+        <ParallaxHero className="py-16 md:py-24">
+          <div className="container mx-auto px-4">
             <AnimatedSection className="max-w-4xl mx-auto text-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
                 <Stethoscope className="w-4 h-4 text-primary" />
@@ -66,7 +66,7 @@ const ClinicMarketing = () => {
               </div>
             </AnimatedSection>
           </div>
-        </section>
+        </ParallaxHero>
 
         {/* Results */}
         <section className="py-16 bg-card">
