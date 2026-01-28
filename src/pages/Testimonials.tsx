@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { SwiftBot } from "@/components/SwiftBot";
-import { Star, Quote, MessageCircle, ArrowRight } from "lucide-react";
+import { Star, Quote, MessageCircle, ArrowRight, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TestimonialCarousel } from "@/components/TestimonialCarousel";
+import { VideoTestimonial } from "@/components/VideoTestimonial";
 
 const testimonials = [
   // Clinic Testimonials
@@ -16,6 +19,7 @@ const testimonials = [
     result: "3x more patients",
     review: "Before Swiftgrowthdigital, we relied only on referrals. Now we get 25+ new patient inquiries every month from Google. The WhatsApp automation saves us so much time in appointment booking.",
     avatar: "RS",
+    image: "/placeholder.svg",
   },
   {
     category: "Clinic",
@@ -26,6 +30,7 @@ const testimonials = [
     result: "60% more bookings",
     review: "Sonu and team understood our clinic's needs perfectly. The Instagram ads they run bring quality leads who are actually interested in our treatments. Best investment we made!",
     avatar: "PM",
+    image: "/placeholder.svg",
   },
   {
     category: "Clinic",
@@ -36,6 +41,7 @@ const testimonials = [
     result: "₹2L+ monthly revenue increase",
     review: "Very professional team. They built our website, set up Google ads, and now we rank #1 for 'ortho doctor near me' in our area. The results speak for themselves.",
     avatar: "AK",
+    image: "/placeholder.svg",
   },
   // Real Estate Testimonials
   {
@@ -47,6 +53,7 @@ const testimonials = [
     result: "200+ qualified leads/month",
     review: "We were spending lakhs on MagicBricks with poor results. Swiftgrowthdigital's Facebook ads strategy gave us 3x better leads at half the cost. Their CRM integration is a game-changer.",
     avatar: "VS",
+    image: "/placeholder.svg",
   },
   {
     category: "Real Estate",
@@ -57,6 +64,7 @@ const testimonials = [
     result: "Closed 12 deals in 3 months",
     review: "The team created separate campaigns for each of our projects. The landing pages they built convert really well. We've stopped all newspaper ads now.",
     avatar: "AR",
+    image: "/placeholder.svg",
   },
   {
     category: "Real Estate",
@@ -67,6 +75,7 @@ const testimonials = [
     result: "5x ROI on ad spend",
     review: "Honest and transparent pricing. They don't promise fake numbers like other agencies. The leads we get are genuine buyers, and our sales team loves working with them.",
     avatar: "MF",
+    image: "/placeholder.svg",
   },
   // Restaurant Testimonials
   {
@@ -78,6 +87,7 @@ const testimonials = [
     result: "70% direct orders",
     review: "We were paying 30% to Swiggy and Zomato. Swiftgrowthdigital helped us build our own ordering system on WhatsApp. Now most orders come directly to us. Saved lakhs in commissions!",
     avatar: "RP",
+    image: "/placeholder.svg",
   },
   {
     category: "Restaurant",
@@ -88,6 +98,7 @@ const testimonials = [
     result: "2x revenue growth",
     review: "The food reels they create for Instagram get amazing engagement. Our follower count grew from 500 to 15,000 in 6 months, and we're getting orders from all over the city now.",
     avatar: "DK",
+    image: "/placeholder.svg",
   },
   {
     category: "Restaurant",
@@ -98,13 +109,40 @@ const testimonials = [
     result: "300+ orders/week directly",
     review: "As a cloud kitchen, we needed to reduce aggregator dependency. The Google Ads + WhatsApp combo they set up works perfectly. Our margins improved by 20%.",
     avatar: "AJ",
+    image: "/placeholder.svg",
+  },
+];
+
+const videoTestimonials = [
+  {
+    videoId: "dQw4w9WgXcQ", // Placeholder
+    title: "How We Grew City Dental's Patient Base 3x",
+    clientName: "Dr. Rajesh Sharma",
+    business: "City Dental Care",
+  },
+  {
+    videoId: "dQw4w9WgXcQ", // Placeholder
+    title: "Real Estate Success: 200+ Leads Per Month",
+    clientName: "Vikram Singh",
+    business: "Sunrise Developers",
+  },
+  {
+    videoId: "dQw4w9WgXcQ", // Placeholder
+    title: "Restaurant Direct Orders Jumped to 70%",
+    clientName: "Ravi Patel",
+    business: "Punjabi Tadka",
   },
 ];
 
 const categories = ["All", "Clinic", "Real Estate", "Restaurant"];
 
 const Testimonials = () => {
+  const [activeCategory, setActiveCategory] = useState("All");
   const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I%20saw%20your%20testimonials%20and%20want%20to%20discuss%20my%20business";
+
+  const filteredTestimonials = activeCategory === "All" 
+    ? testimonials 
+    : testimonials.filter(t => t.category === activeCategory);
 
   return (
     <div className="min-h-screen bg-background">
@@ -129,6 +167,47 @@ const Testimonials = () => {
           </div>
         </section>
 
+        {/* Featured Carousel */}
+        <section className="py-12 md:py-16 border-b border-border">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl font-display font-bold text-center mb-8">Featured Reviews</h2>
+            <TestimonialCarousel 
+              testimonials={testimonials.slice(0, 5)} 
+              autoPlay={true}
+              interval={6000}
+            />
+          </div>
+        </section>
+
+        {/* Video Testimonials */}
+        <section className="py-16 md:py-20 bg-card">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border mb-4">
+                <Play className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-muted-foreground">Video Testimonials</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+                Hear From Our <span className="text-gradient">Clients</span>
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Watch real business owners share their growth journey with Swiftgrowthdigital
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {videoTestimonials.map((video, index) => (
+                <VideoTestimonial
+                  key={index}
+                  videoId={video.videoId}
+                  title={video.title}
+                  clientName={video.clientName}
+                  business={video.business}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Categories Filter */}
         <section className="py-8 border-b border-border">
           <div className="container mx-auto px-4">
@@ -136,8 +215,9 @@ const Testimonials = () => {
               {categories.map((category) => (
                 <button
                   key={category}
+                  onClick={() => setActiveCategory(category)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    category === "All"
+                    category === activeCategory
                       ? "bg-primary text-primary-foreground"
                       : "bg-secondary text-muted-foreground hover:bg-secondary/80"
                   }`}
@@ -153,11 +233,30 @@ const Testimonials = () => {
         <section className="py-16 md:py-20">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {testimonials.map((testimonial, index) => (
+              {filteredTestimonials.map((testimonial, index) => (
                 <div
                   key={index}
                   className="bg-card rounded-2xl border border-border p-6 hover:border-primary/30 transition-all duration-300"
                 >
+                  {/* Client Photo */}
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-14 h-14 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground font-semibold overflow-hidden">
+                      {testimonial.image && testimonial.image !== "/placeholder.svg" ? (
+                        <img src={testimonial.image} alt={testimonial.name} className="w-full h-full object-cover" />
+                      ) : (
+                        testimonial.avatar
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-display font-semibold text-foreground">
+                        {testimonial.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {testimonial.business}, {testimonial.location}
+                      </p>
+                    </div>
+                  </div>
+
                   {/* Quote Icon */}
                   <Quote className="w-8 h-8 text-primary/30 mb-4" />
 
@@ -178,23 +277,8 @@ const Testimonials = () => {
                     ))}
                   </div>
 
-                  {/* Author */}
-                  <div className="flex items-center gap-3 pt-4 border-t border-border">
-                    <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground font-semibold">
-                      {testimonial.avatar}
-                    </div>
-                    <div>
-                      <p className="font-display font-semibold text-foreground">
-                        {testimonial.name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {testimonial.business}, {testimonial.location}
-                      </p>
-                    </div>
-                  </div>
-
                   {/* Category Tag */}
-                  <div className="mt-4">
+                  <div>
                     <span className="text-xs text-muted-foreground uppercase tracking-wider">
                       {testimonial.category}
                     </span>

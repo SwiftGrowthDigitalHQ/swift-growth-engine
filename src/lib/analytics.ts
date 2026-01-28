@@ -64,6 +64,18 @@ export const trackConversion = {
     trackMetaCustomEvent('FreeAuditSubmit', { business_type: businessType, city });
     pushToDataLayer({ event: 'free_audit_submit', business_type: businessType, city });
   },
+
+  videoTestimonialPlayed: (clientName?: string) => {
+    trackGA4Event('video_testimonial_played', { client_name: clientName });
+    trackMetaCustomEvent('VideoTestimonialPlayed', { client_name: clientName });
+    pushToDataLayer({ event: 'video_testimonial_played', client_name: clientName });
+  },
+
+  contactFormSubmit: (source?: string, businessType?: string) => {
+    trackGA4Event('contact_form_submit', { source, business_type: businessType });
+    trackMetaEvent('Lead', { content_name: 'Contact Form', source, business_type: businessType });
+    pushToDataLayer({ event: 'contact_form_submit', source, business_type: businessType });
+  },
   
   pageView: (pagePath: string, pageTitle: string) => {
     trackGA4Event('page_view', { page_path: pagePath, page_title: pageTitle });
