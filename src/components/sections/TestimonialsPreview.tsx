@@ -1,6 +1,7 @@
 import { Star, Quote, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { AnimatedSection } from "@/hooks/use-scroll-animation";
 
 const featuredTestimonials = [
   {
@@ -34,7 +35,7 @@ export function TestimonialsPreview() {
     <section className="py-20 md:py-28 bg-card relative">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="max-w-3xl mx-auto text-center mb-16">
+        <AnimatedSection className="max-w-3xl mx-auto text-center mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border mb-6">
             <Star className="w-4 h-4 text-primary fill-primary" />
             <span className="text-sm font-medium text-muted-foreground">100+ Happy Clients</span>
@@ -45,53 +46,55 @@ export function TestimonialsPreview() {
           <p className="text-lg text-muted-foreground">
             Real results from real business owners across India.
           </p>
-        </div>
+        </AnimatedSection>
 
         {/* Testimonials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           {featuredTestimonials.map((testimonial, index) => (
-            <div
+            <AnimatedSection
               key={index}
-              className="bg-background rounded-2xl border border-border p-6 hover:border-primary/30 transition-all duration-300"
+              delay={index * 150}
             >
-              <Quote className="w-8 h-8 text-primary/30 mb-4" />
-              <p className="text-muted-foreground leading-relaxed mb-6">
-                "{testimonial.review}"
-              </p>
-              <div className="inline-block px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full mb-4">
-                ✓ {testimonial.result}
-              </div>
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 text-primary fill-primary" />
-                ))}
-              </div>
-              <div className="flex items-center gap-3 pt-4 border-t border-border">
-                <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground font-semibold text-sm">
-                  {testimonial.avatar}
+              <div className="bg-background rounded-2xl border border-border p-6 hover:border-primary/30 transition-all duration-300 h-full">
+                <Quote className="w-8 h-8 text-primary/30 mb-4" />
+                <p className="text-muted-foreground leading-relaxed mb-6">
+                  "{testimonial.review}"
+                </p>
+                <div className="inline-block px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full mb-4">
+                  ✓ {testimonial.result}
                 </div>
-                <div>
-                  <p className="font-display font-semibold text-foreground text-sm">
-                    {testimonial.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {testimonial.business}
-                  </p>
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 text-primary fill-primary" />
+                  ))}
+                </div>
+                <div className="flex items-center gap-3 pt-4 border-t border-border">
+                  <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground font-semibold text-sm">
+                    {testimonial.avatar}
+                  </div>
+                  <div>
+                    <p className="font-display font-semibold text-foreground text-sm">
+                      {testimonial.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {testimonial.business}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </AnimatedSection>
           ))}
         </div>
 
         {/* CTA */}
-        <div className="text-center mt-12">
+        <AnimatedSection className="text-center mt-12" delay={450}>
           <Link to="/testimonials">
             <Button variant="outline" size="lg">
               View All Testimonials
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
-        </div>
+        </AnimatedSection>
       </div>
     </section>
   );
