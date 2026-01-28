@@ -7,6 +7,7 @@ import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import { SoundProvider } from "@/hooks/use-sound";
 import { ScrollProgressIndicator } from "@/components/ScrollProgressIndicator";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { RouteProgressBar } from "@/components/RouteProgressBar";
 import Index from "./pages/Index";
 import Services from "./pages/Services";
 import Pricing from "./pages/Pricing";
@@ -37,6 +38,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AnalyticsScripts />
+          <RouteProgressBar />
           <ScrollProgressIndicator />
           <ScrollToTop />
           <Routes>
