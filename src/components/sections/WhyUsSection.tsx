@@ -53,13 +53,13 @@ export function WhyUsSection() {
           {reasons.map((reason, index) => (
             <div
               key={index}
-              className="flex gap-4 p-6 rounded-xl bg-secondary border border-border hover:border-primary/30 transition-colors"
+              className="group flex gap-4 p-6 rounded-xl bg-secondary border border-border hover:border-primary/30 hover-lift transition-all duration-300"
             >
-              <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/30 group-hover:scale-110 transition-all duration-300">
                 <reason.icon className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-display font-semibold mb-2 text-foreground">
+                <h3 className="text-lg font-display font-semibold mb-2 text-foreground group-hover:text-primary transition-colors duration-300">
                   {reason.title}
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
