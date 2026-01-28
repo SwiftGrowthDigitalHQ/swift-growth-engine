@@ -2,8 +2,10 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { SwiftBot } from "@/components/SwiftBot";
-import { ArrowRight, TrendingUp, Phone, Users, MessageCircle } from "lucide-react";
+import { ArrowRight, TrendingUp, Phone, Users, MessageCircle, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
+import { VideoTestimonial } from "@/components/VideoTestimonial";
 
 const caseStudies = [
   {
@@ -35,6 +37,9 @@ const caseStudies = [
     },
     quote: "Swiftgrowthdigital transformed our practice. We now have a steady stream of patients and our revenue has doubled in 6 months.",
     duration: "6 months",
+    beforeImage: "/placeholder.svg",
+    afterImage: "/placeholder.svg",
+    videoId: "dQw4w9WgXcQ", // Placeholder - replace with actual testimonial video
   },
   {
     id: "real-estate-bangalore",
@@ -65,6 +70,9 @@ const caseStudies = [
     },
     quote: "The quality of leads improved dramatically. Our sales team now closes 3x more deals with the same effort.",
     duration: "4 months",
+    beforeImage: "/placeholder.svg",
+    afterImage: "/placeholder.svg",
+    videoId: null,
   },
   {
     id: "cloud-kitchen-delhi",
@@ -95,6 +103,9 @@ const caseStudies = [
     },
     quote: "Our direct orders went from 40% to 70%. The savings on commission alone pays for the entire marketing budget!",
     duration: "5 months",
+    beforeImage: "/placeholder.svg",
+    afterImage: "/placeholder.svg",
+    videoId: "dQw4w9WgXcQ", // Placeholder
   },
 ];
 
@@ -128,7 +139,7 @@ const CaseStudies = () => {
         {/* Case Studies */}
         <section className="py-16 md:py-20">
           <div className="container mx-auto px-4">
-            <div className="space-y-16">
+            <div className="space-y-20">
               {caseStudies.map((study, index) => (
                 <div
                   key={study.id}
@@ -148,87 +159,113 @@ const CaseStudies = () => {
                     <p className="text-muted-foreground">{study.industry}</p>
                   </div>
 
-                  <div className="p-6 md:p-8 grid md:grid-cols-2 gap-8">
-                    {/* Left Column */}
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-lg font-display font-semibold text-foreground mb-3">Background</h3>
-                        <p className="text-muted-foreground leading-relaxed">{study.background}</p>
+                  <div className="p-6 md:p-8">
+                    <div className="grid lg:grid-cols-2 gap-8">
+                      {/* Left Column - Story */}
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-lg font-display font-semibold text-foreground mb-3">Background</h3>
+                          <p className="text-muted-foreground leading-relaxed">{study.background}</p>
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-display font-semibold text-foreground mb-3">The Problem</h3>
+                          <p className="text-muted-foreground leading-relaxed">{study.problem}</p>
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-display font-semibold text-foreground mb-3">Our Strategy</h3>
+                          <ul className="space-y-2">
+                            {study.strategy.map((item, i) => (
+                              <li key={i} className="flex items-start gap-3 text-muted-foreground">
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-lg font-display font-semibold text-foreground mb-3">The Problem</h3>
-                        <p className="text-muted-foreground leading-relaxed">{study.problem}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-display font-semibold text-foreground mb-3">Our Strategy</h3>
-                        <ul className="space-y-2">
-                          {study.strategy.map((item, i) => (
-                            <li key={i} className="flex items-start gap-3 text-muted-foreground">
-                              <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
 
-                    {/* Right Column - Results */}
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-lg font-display font-semibold text-foreground mb-4">Results Comparison</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="bg-secondary/50 rounded-xl p-4">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Before</p>
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2">
-                                <Users className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-sm text-muted-foreground">Leads/month:</span>
-                                <span className="font-semibold text-foreground">{study.results.before.leads}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Phone className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-sm text-muted-foreground">Calls:</span>
-                                <span className="font-semibold text-foreground">{study.results.before.calls}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <MessageCircle className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-sm text-muted-foreground">Inquiries:</span>
-                                <span className="font-semibold text-foreground">{study.results.before.inquiries}</span>
+                      {/* Right Column - Results & Media */}
+                      <div className="space-y-6">
+                        {/* Before/After Slider */}
+                        <div>
+                          <h3 className="text-lg font-display font-semibold text-foreground mb-4">Visual Results</h3>
+                          <BeforeAfterSlider
+                            beforeImage={study.beforeImage}
+                            afterImage={study.afterImage}
+                            beforeLabel="Before"
+                            afterLabel="After"
+                          />
+                        </div>
+
+                        {/* Metrics Comparison */}
+                        <div>
+                          <h3 className="text-lg font-display font-semibold text-foreground mb-4">Results Comparison</h3>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-secondary/50 rounded-xl p-4">
+                              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Before</p>
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                  <Users className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-sm text-muted-foreground">Leads:</span>
+                                  <span className="font-semibold text-foreground">{study.results.before.leads}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Phone className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-sm text-muted-foreground">Calls:</span>
+                                  <span className="font-semibold text-foreground">{study.results.before.calls}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <MessageCircle className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-sm text-muted-foreground">Inquiries:</span>
+                                  <span className="font-semibold text-foreground">{study.results.before.inquiries}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="bg-primary/10 rounded-xl p-4 border border-primary/20">
-                            <p className="text-xs text-primary uppercase tracking-wider mb-3">After</p>
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2">
-                                <Users className="w-4 h-4 text-primary" />
-                                <span className="text-sm text-muted-foreground">Leads/month:</span>
-                                <span className="font-semibold text-primary">{study.results.after.leads}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Phone className="w-4 h-4 text-primary" />
-                                <span className="text-sm text-muted-foreground">Calls:</span>
-                                <span className="font-semibold text-primary">{study.results.after.calls}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <MessageCircle className="w-4 h-4 text-primary" />
-                                <span className="text-sm text-muted-foreground">Inquiries:</span>
-                                <span className="font-semibold text-primary">{study.results.after.inquiries}</span>
+                            <div className="bg-primary/10 rounded-xl p-4 border border-primary/20">
+                              <p className="text-xs text-primary uppercase tracking-wider mb-3">After</p>
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                  <Users className="w-4 h-4 text-primary" />
+                                  <span className="text-sm text-muted-foreground">Leads:</span>
+                                  <span className="font-semibold text-primary">{study.results.after.leads}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Phone className="w-4 h-4 text-primary" />
+                                  <span className="text-sm text-muted-foreground">Calls:</span>
+                                  <span className="font-semibold text-primary">{study.results.after.calls}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <MessageCircle className="w-4 h-4 text-primary" />
+                                  <span className="text-sm text-muted-foreground">Inquiries:</span>
+                                  <span className="font-semibold text-primary">{study.results.after.inquiries}</span>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
+                    </div>
 
+                    {/* Video Testimonial & Quote */}
+                    <div className="grid md:grid-cols-2 gap-6 mt-8 pt-8 border-t border-border">
                       {/* Quote */}
                       <div className="bg-secondary/30 rounded-xl p-6 border-l-4 border-primary">
                         <p className="text-foreground italic mb-3">"{study.quote}"</p>
                         <p className="text-sm text-muted-foreground">— {study.clientName} Team</p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Campaign Duration: <strong className="text-foreground">{study.duration}</strong>
+                        </p>
                       </div>
 
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>Campaign Duration: <strong className="text-foreground">{study.duration}</strong></span>
-                      </div>
+                      {/* Video Testimonial */}
+                      {study.videoId && (
+                        <VideoTestimonial
+                          videoId={study.videoId}
+                          title={`${study.clientName} Success Story`}
+                          clientName={study.clientName}
+                          business={study.industry}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
