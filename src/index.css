@@ -18,29 +18,29 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary: Deep Royal Blue #0B1C2D */
-    --primary: 210 61% 11%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary: Sky Blue #38BDF8 */
+    --primary: 199 89% 60%;
+    --primary-foreground: 222 47% 11%;
 
-    /* Secondary: Lighter blue-grey */
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    /* Secondary: Deep Sky Blue #0284C7 */
+    --secondary: 201 96% 40%;
+    --secondary-foreground: 0 0% 100%;
 
     /* Muted backgrounds */
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
 
-    /* Accent: Warm Orange #F59E0B */
-    --accent: 38 92% 50%;
-    --accent-foreground: 222 47% 11%;
+    /* Accent: Deep Sky Blue for icons/borders */
+    --accent: 201 96% 40%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders - subtle grey */
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 38 92% 50%;
+    /* Borders - subtle sky blue tint */
+    --border: 199 30% 88%;
+    --input: 199 30% 88%;
+    --ring: 199 89% 60%;
 
     --radius: 0.75rem;
 
@@ -48,30 +48,31 @@
     --whatsapp: 142 71% 45%;
     --whatsapp-foreground: 0 0% 100%;
     
-    /* Glows updated for light theme */
-    --glow-primary: 0 0 40px hsl(210 61% 11% / 0.15);
-    --glow-accent: 0 0 40px hsl(38 92% 50% / 0.25);
+    /* Glows updated for sky-blue theme */
+    --glow-primary: 0 0 40px hsl(199 89% 60% / 0.25);
+    --glow-accent: 0 0 40px hsl(201 96% 40% / 0.25);
     --glow-whatsapp: 0 0 30px hsl(142 71% 45% / 0.35);
     
-    /* Gradients - conversion focused */
-    --gradient-primary: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(32 95% 45%) 100%);
-    --gradient-dark: linear-gradient(180deg, hsl(210 61% 11%) 0%, hsl(210 61% 8%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
-    --gradient-hero: radial-gradient(ellipse 80% 50% at 50% -20%, hsl(38 92% 50% / 0.1) 0%, transparent 50%);
+    /* Gradients - sky blue conversion focused */
+    --gradient-primary: linear-gradient(135deg, hsl(142 71% 45%) 0%, hsl(142 76% 36%) 100%);
+    --gradient-sky: linear-gradient(135deg, hsl(199 89% 60%) 0%, hsl(201 96% 40%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(201 96% 40%) 0%, hsl(201 96% 32%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(199 40% 98%) 100%);
+    --gradient-hero: radial-gradient(ellipse 80% 50% at 50% -20%, hsl(199 89% 60% / 0.15) 0%, transparent 50%);
 
-    /* Sidebar - Deep Royal Blue theme */
-    --sidebar-background: 210 61% 11%;
+    /* Sidebar - Deep Sky Blue theme */
+    --sidebar-background: 201 96% 40%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 38 92% 50%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 210 61% 18%;
+    --sidebar-primary: 142 71% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 201 96% 32%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 210 61% 20%;
-    --sidebar-ring: 38 92% 50%;
+    --sidebar-border: 201 96% 50%;
+    --sidebar-ring: 199 89% 60%;
   }
 
   .dark {
-    --background: 210 61% 11%;
+    --background: 201 96% 15%;
     --foreground: 210 40% 98%;
   }
 }
