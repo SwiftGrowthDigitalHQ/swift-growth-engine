@@ -13,6 +13,11 @@ import Contact from "./pages/Contact";
 import ClinicMarketing from "./pages/ClinicMarketing";
 import RealEstateMarketing from "./pages/RealEstateMarketing";
 import RestaurantMarketing from "./pages/RestaurantMarketing";
+import EducationMarketing from "./pages/EducationMarketing";
+import SalonMarketing from "./pages/SalonMarketing";
+import LocalBusinessMarketing from "./pages/LocalBusinessMarketing";
+import ServiceBusinessMarketing from "./pages/ServiceBusinessMarketing";
+import EcommerceMarketing from "./pages/EcommerceMarketing";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import CaseStudies from "./pages/CaseStudies";
@@ -39,6 +44,11 @@ const App = () => (
             <Route path="/clinic-marketing" element={<ClinicMarketing />} />
             <Route path="/real-estate-marketing" element={<RealEstateMarketing />} />
             <Route path="/restaurant-marketing" element={<RestaurantMarketing />} />
+            <Route path="/education-marketing" element={<EducationMarketing />} />
+            <Route path="/salon-marketing" element={<SalonMarketing />} />
+            <Route path="/local-business-marketing" element={<LocalBusinessMarketing />} />
+            <Route path="/service-business-marketing" element={<ServiceBusinessMarketing />} />
+            <Route path="/ecommerce-marketing" element={<EcommerceMarketing />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/case-studies" element={<CaseStudies />} />
