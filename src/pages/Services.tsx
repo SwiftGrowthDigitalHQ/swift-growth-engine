@@ -1,8 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { SwiftBot } from "@/components/SwiftBot";
-import { 
+import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
+import {
   Globe, 
   Target, 
   Search, 
@@ -170,8 +169,7 @@ const Services = () => {
         </section>
       </main>
       <Footer />
-      <WhatsAppButton />
-      <SwiftBot />
+      <UnifiedChatWidget />
     </div>
   );
 };

@@ -1,7 +1,6 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { SwiftBot } from "@/components/SwiftBot";
+import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
 import { Check, ArrowRight, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -205,8 +204,7 @@ const Pricing = () => {
         </section>
       </main>
       <Footer />
-      <WhatsAppButton />
-      <SwiftBot />
+      <UnifiedChatWidget />
     </div>
   );
 };

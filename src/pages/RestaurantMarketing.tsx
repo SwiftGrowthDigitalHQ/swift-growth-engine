@@ -1,8 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { SwiftBot } from "@/components/SwiftBot";
-import { Check, ArrowRight, MessageCircle, UtensilsCrossed, TrendingUp } from "lucide-react";
+import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
+import { Check, ArrowRight, MessageCircle, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const RestaurantMarketing = () => {
@@ -145,8 +144,7 @@ const RestaurantMarketing = () => {
         </section>
       </main>
       <Footer />
-      <WhatsAppButton />
-      <SwiftBot />
+      <UnifiedChatWidget />
     </div>
   );
 };
