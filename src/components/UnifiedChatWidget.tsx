@@ -46,7 +46,7 @@ type QualificationStep = "initial" | "business" | "goal" | "qualified" | null;
 export function UnifiedChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasShownAutoOpen, setHasShownAutoOpen] = useState(false);
-  const { playPop, playWhoosh } = useSound();
+  const { playPop, playWhoosh, playNotification } = useSound();
   const [qualificationStep, setQualificationStep] = useState<QualificationStep>("initial");
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -118,6 +118,7 @@ export function UnifiedChatWidget() {
     let textBuffer = "";
     let assistantContent = "";
     let streamDone = false;
+    let hasPlayedNotification = false;
 
     while (!streamDone) {
       const { done, value } = await reader.read();
@@ -143,6 +144,11 @@ export function UnifiedChatWidget() {
           const parsed = JSON.parse(jsonStr);
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
           if (content) {
+            // Play notification on first content chunk
+            if (!hasPlayedNotification) {
+              playNotification();
+              hasPlayedNotification = true;
+            }
             assistantContent += content;
             setMessages((prev) => {
               const last = prev[prev.length - 1];
@@ -162,7 +168,7 @@ export function UnifiedChatWidget() {
     }
 
     return assistantContent;
-  }, []);
+  }, [playNotification]);
 
   const handleQuickOption = async (option: QuickOption) => {
     const userMessage: Message = { role: "user", content: option.value };
@@ -173,6 +179,7 @@ export function UnifiedChatWidget() {
       // Move to business type question
       setQualificationStep("business");
       setTimeout(() => {
+        playNotification();
         setMessages((prev) => [
           ...prev,
           {
@@ -185,6 +192,7 @@ export function UnifiedChatWidget() {
       // Move to goal question
       setQualificationStep("goal");
       setTimeout(() => {
+        playNotification();
         setMessages((prev) => [
           ...prev,
           {
@@ -198,6 +206,7 @@ export function UnifiedChatWidget() {
       setQualificationStep("qualified");
       setShowWhatsAppCTA(true);
       setTimeout(() => {
+        playNotification();
         setMessages((prev) => [
           ...prev,
           {
