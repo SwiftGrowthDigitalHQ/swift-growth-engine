@@ -229,6 +229,59 @@
   .btn-shine:hover::after {
     transform: rotate(30deg) translateX(100%);
   }
+
+  /* Button glow effects */
+  .btn-glow-primary {
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+
+  .btn-glow-primary:hover {
+    box-shadow: 
+      0 0 20px hsl(25 95% 53% / 0.4),
+      0 0 40px hsl(25 95% 53% / 0.2),
+      0 10px 30px -10px hsl(0 0% 0% / 0.4);
+  }
+
+  .btn-glow-whatsapp {
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+
+  .btn-glow-whatsapp:hover {
+    box-shadow: 
+      0 0 20px hsl(142 71% 45% / 0.5),
+      0 0 40px hsl(142 71% 45% / 0.25),
+      0 10px 30px -10px hsl(0 0% 0% / 0.4);
+  }
+
+  /* Subtle pulse animation for primary CTAs */
+  .btn-pulse-whatsapp {
+    animation: btn-subtle-pulse 3s ease-in-out infinite;
+  }
+
+  .btn-pulse-whatsapp:hover {
+    animation: none;
+  }
+
+  /* Border glow for outline buttons */
+  .btn-border-glow {
+    transition: all 0.3s ease;
+  }
+
+  .btn-border-glow::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, hsl(25 95% 53% / 0), hsl(25 95% 53% / 0));
+    z-index: -1;
+    transition: background 0.3s ease;
+    opacity: 0;
+  }
+
+  .btn-border-glow:hover::before {
+    opacity: 1;
+    background: linear-gradient(135deg, hsl(25 95% 53% / 0.2), hsl(25 95% 53% / 0.05));
+  }
 }
 
 @keyframes float {
@@ -246,6 +299,19 @@
   }
   50% {
     box-shadow: 0 0 40px hsl(142 71% 45% / 0.6);
+  }
+}
+
+@keyframes btn-subtle-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 4px 14px hsl(142 71% 45% / 0.3),
+      0 0 0 0 hsl(142 71% 45% / 0.4);
+  }
+  50% {
+    box-shadow: 
+      0 4px 20px hsl(142 71% 45% / 0.4),
+      0 0 0 4px hsl(142 71% 45% / 0.1);
   }
 }
 
