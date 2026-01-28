@@ -6,61 +6,72 @@
 
 @layer base {
   :root {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
+    /* Background: Off-white #F8FAFC */
+    --background: 210 40% 98%;
+    /* Text: Dark slate #0F172A */
+    --foreground: 222 47% 11%;
 
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
+    /* Card backgrounds - clean white */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
 
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 32 95% 55%;
-    --primary-foreground: 222 47% 6%;
+    /* Primary: Deep Royal Blue #0B1C2D */
+    --primary: 210 61% 11%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 30% 14%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary: Lighter blue-grey */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 222 30% 12%;
-    --muted-foreground: 215 20% 55%;
+    /* Muted backgrounds */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 173 80% 40%;
-    --accent-foreground: 222 47% 6%;
+    /* Accent: Warm Orange #F59E0B */
+    --accent: 38 92% 50%;
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 222 30% 18%;
-    --input: 222 30% 18%;
-    --ring: 32 95% 55%;
+    /* Borders - subtle grey */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 38 92% 50%;
 
     --radius: 0.75rem;
 
-    /* Custom tokens */
-    --whatsapp: 142 70% 45%;
+    /* CTA Green: Fresh Growth Green #22C55E */
+    --whatsapp: 142 71% 45%;
     --whatsapp-foreground: 0 0% 100%;
     
-    --glow-primary: 0 0 40px hsl(32 95% 55% / 0.3);
-    --glow-accent: 0 0 40px hsl(173 80% 40% / 0.2);
-    --glow-whatsapp: 0 0 30px hsl(142 70% 45% / 0.4);
+    /* Glows updated for light theme */
+    --glow-primary: 0 0 40px hsl(210 61% 11% / 0.15);
+    --glow-accent: 0 0 40px hsl(38 92% 50% / 0.25);
+    --glow-whatsapp: 0 0 30px hsl(142 71% 45% / 0.35);
     
-    --gradient-primary: linear-gradient(135deg, hsl(32 95% 55%) 0%, hsl(25 95% 50%) 100%);
-    --gradient-dark: linear-gradient(180deg, hsl(222 47% 8%) 0%, hsl(222 47% 4%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(222 30% 12%) 0%, hsl(222 30% 8%) 100%);
-    --gradient-hero: radial-gradient(ellipse 80% 50% at 50% -20%, hsl(32 95% 55% / 0.15) 0%, transparent 50%);
+    /* Gradients - conversion focused */
+    --gradient-primary: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(32 95% 45%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(210 61% 11%) 0%, hsl(210 61% 8%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
+    --gradient-hero: radial-gradient(ellipse 80% 50% at 50% -20%, hsl(38 92% 50% / 0.1) 0%, transparent 50%);
 
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 32 95% 55%;
-    --sidebar-primary-foreground: 222 47% 6%;
-    --sidebar-accent: 222 30% 14%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 30% 18%;
-    --sidebar-ring: 32 95% 55%;
+    /* Sidebar - Deep Royal Blue theme */
+    --sidebar-background: 210 61% 11%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 210 61% 18%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 61% 20%;
+    --sidebar-ring: 38 92% 50%;
   }
 
   .dark {
-    --background: 222 47% 6%;
+    --background: 210 61% 11%;
     --foreground: 210 40% 98%;
   }
 }
@@ -146,10 +157,10 @@
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 20px hsl(142 70% 45% / 0.4);
+    box-shadow: 0 0 20px hsl(142 71% 45% / 0.4);
   }
   50% {
-    box-shadow: 0 0 40px hsl(142 70% 45% / 0.6);
+    box-shadow: 0 0 40px hsl(142 71% 45% / 0.6);
   }
 }
 
@@ -173,20 +184,20 @@
   }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - light theme */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(222 47% 6%);
+  background: hsl(210 40% 96%);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(222 30% 20%);
+  background: hsl(215 16% 75%);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(222 30% 30%);
+  background: hsl(215 16% 60%);
 }

@@ -38,11 +38,11 @@ const services = [
 
 export function ServicesSection() {
   return (
-    <section className="py-20 md:py-28 relative">
+    <section className="py-20 md:py-28 relative bg-card">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="max-w-3xl mx-auto text-center mb-16">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-6">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-6 text-primary">
             Complete <span className="text-gradient">Growth Solutions</span>
           </h2>
           <p className="text-lg text-muted-foreground">
@@ -56,12 +56,12 @@ export function ServicesSection() {
           {services.map((service, index) => (
             <div
               key={index}
-              className="group p-6 md:p-8 rounded-2xl bg-gradient-card border border-border hover:border-primary/50 transition-all duration-300 hover:-translate-y-1"
+              className="group p-6 md:p-8 rounded-2xl bg-background border border-border hover:border-accent/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
             >
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
-                <service.icon className="w-6 h-6 text-primary" />
+              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-6 group-hover:bg-accent/20 transition-colors">
+                <service.icon className="w-6 h-6 text-accent" />
               </div>
-              <h3 className="text-xl font-display font-semibold mb-3 text-foreground">
+              <h3 className="text-xl font-display font-semibold mb-3 text-primary">
                 {service.title}
               </h3>
               <p className="text-muted-foreground leading-relaxed">
