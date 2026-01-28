@@ -5,6 +5,7 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { SwiftBot } from "@/components/SwiftBot";
 import { Gift, Check, ArrowRight, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { trackConversion } from "@/lib/analytics";
 
 const FreeAudit = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +19,9 @@ const FreeAudit = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    // Track conversion event
+    trackConversion.freeAuditSubmit(formData.businessType, formData.city);
 
     // Create WhatsApp message with form data
     const message = encodeURIComponent(

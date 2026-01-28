@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import Index from "./pages/Index";
 import Services from "./pages/Services";
 import Pricing from "./pages/Pricing";
@@ -11,6 +12,10 @@ import Contact from "./pages/Contact";
 import ClinicMarketing from "./pages/ClinicMarketing";
 import RealEstateMarketing from "./pages/RealEstateMarketing";
 import RestaurantMarketing from "./pages/RestaurantMarketing";
+import Blog from "./pages/Blog";
+import CaseStudies from "./pages/CaseStudies";
+import Testimonials from "./pages/Testimonials";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +26,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <AnalyticsScripts />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/services" element={<Services />} />
@@ -30,6 +36,10 @@ const App = () => (
           <Route path="/clinic-marketing" element={<ClinicMarketing />} />
           <Route path="/real-estate-marketing" element={<RealEstateMarketing />} />
           <Route path="/restaurant-marketing" element={<RestaurantMarketing />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/case-studies" element={<CaseStudies />} />
+          <Route path="/testimonials" element={<Testimonials />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
