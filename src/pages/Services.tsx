@@ -19,6 +19,7 @@ const services = [
     icon: Globe,
     title: "Website Design & Development",
     description: "Fast, mobile-friendly websites that convert visitors into customers.",
+    image: "/Website Design & Development.jpeg",
     features: [
       "Mobile-first responsive design",
       "Fast loading speed",
@@ -32,6 +33,7 @@ const services = [
     icon: Target,
     title: "Google & Meta Ads",
     description: "Strategic paid advertising that brings real leads to your business.",
+    image: "/Google & Meta Ads.jpeg",
     features: [
       "Google Search & Display Ads",
       "Facebook & Instagram Ads",
@@ -45,6 +47,7 @@ const services = [
     icon: Search,
     title: "Local SEO & Google Ranking",
     description: "Get found when customers search for your services in your area.",
+    image: "/Local SEO & Google Ranking.jpeg",
     features: [
       "Google My Business optimization",
       "Local keyword targeting",
@@ -58,6 +61,7 @@ const services = [
     icon: MessageCircle,
     title: "WhatsApp Marketing & Automation",
     description: "Turn inquiries into customers with automated WhatsApp systems.",
+    image: "/WhatsApp Marketing & Automation.jpeg",
     features: [
       "WhatsApp Business setup",
       "Automated responses",
@@ -71,6 +75,7 @@ const services = [
     icon: TrendingUp,
     title: "Social Media Growth",
     description: "Build your brand with engaging content that attracts customers.",
+    image: "/Social Media Growth.jpeg",
     features: [
       "Reels & video content",
       "Graphic design & creatives",
@@ -144,9 +149,20 @@ const Services = () => {
 
                       {/* Visual */}
                       <div className="flex-1 w-full">
-                        <div className="aspect-video rounded-2xl bg-gradient-card border border-border flex items-center justify-center">
-                          <service.icon className="w-20 h-20 text-primary/30" />
-                        </div>
+                        {service.image ? (
+                          <div className="aspect-video rounded-2xl border border-border overflow-hidden bg-card">
+                            <img
+                              src={service.image}
+                              alt={service.title}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          </div>
+                        ) : (
+                          <div className="aspect-video rounded-2xl bg-gradient-card border border-border flex items-center justify-center">
+                            <service.icon className="w-20 h-20 text-primary/30" />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </AnimatedSection>
