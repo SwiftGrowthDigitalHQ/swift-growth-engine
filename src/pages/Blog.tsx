@@ -16,7 +16,7 @@ const blogPosts = [
     author: "Sonu",
     date: "2024-01-15",
     readTime: "8 min read",
-    image: "/favicon (2).png",
+    image: "/favicon.png",
   },
   {
     slug: "google-ads-clinics-india",
@@ -26,7 +26,7 @@ const blogPosts = [
     author: "Sonu",
     date: "2024-01-10",
     readTime: "10 min read",
-    image: "/favicon (2).png",
+    image: "/favicon.png",
   },
   {
     slug: "real-estate-lead-generation",
@@ -36,7 +36,7 @@ const blogPosts = [
     author: "Sonu",
     date: "2024-01-05",
     readTime: "7 min read",
-    image: "/favicon (2).png",
+    image: "/favicon.png",
   },
   {
     slug: "restaurant-cloud-kitchen-marketing",
@@ -46,7 +46,7 @@ const blogPosts = [
     author: "Sonu",
     date: "2024-01-01",
     readTime: "9 min read",
-    image: "/favicon (2).png",
+    image: "/favicon.png",
   },
   {
     slug: "whatsapp-marketing-small-business",
@@ -56,7 +56,7 @@ const blogPosts = [
     author: "Sonu",
     date: "2023-12-28",
     readTime: "6 min read",
-    image: "/favicon (2).png",
+    image: "/favicon.png",
   },
   {
     slug: "local-seo-near-me-search",
@@ -66,7 +66,7 @@ const blogPosts = [
     author: "Sonu",
     date: "2023-12-20",
     readTime: "8 min read",
-    image: "/favicon (2).png",
+    image: "/favicon.png",
   },
 ];
 
