@@ -1,4 +1,4 @@
-const SITE_URL = "https://swiftgrowthdigital.com";
+const SITE_URL = "https://www.swiftgrowthdigital.com";
 
 /**
  * Blog entries for sitemap generation.

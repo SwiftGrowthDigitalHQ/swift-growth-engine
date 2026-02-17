@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://swiftgrowthdigital.com/sitemap-index.xml
+Sitemap: https://www.swiftgrowthdigital.com/sitemap.xml
