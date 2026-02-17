@@ -8,6 +8,7 @@ import { SoundProvider } from "@/hooks/use-sound";
 import { ScrollProgressIndicator } from "@/components/ScrollProgressIndicator";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { RouteProgressBar } from "@/components/RouteProgressBar";
+import { SeoCanonical } from "@/components/SeoCanonical";
 import Index from "./pages/Index";
 import Services from "./pages/Services";
 import Pricing from "./pages/Pricing";
@@ -37,6 +38,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <SeoCanonical />
           <AnalyticsScripts />
           <RouteProgressBar />
           <ScrollProgressIndicator />

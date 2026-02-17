@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 const publicDir = path.join(projectRoot, "public");
 const pagesDir = path.join(projectRoot, "src", "pages");
-const siteUrl = (process.env.SITE_URL || "https://swiftgrowthdigital.com").replace(/\/+$/, "");
+const siteUrl = (process.env.SITE_URL || "https://www.swiftgrowthdigital.com").replace(/\/+$/, "");
 const shouldGzip = process.env.GZIP_SITEMAP === "true";
 const today = toDateOnly(new Date().toISOString());
 
@@ -59,6 +59,32 @@ function toAbsoluteUrl(inputPath) {
   return `${siteUrl}${normalizedPath}`;
 }
 
+function getDefaultPriority(routePath) {
+  if (routePath === "/") {
+    return 1.0;
+  }
+  if (routePath === "/blog" || routePath.startsWith("/blog/")) {
+    return 0.7;
+  }
+  if (routePath === "/services" || routePath.endsWith("-marketing")) {
+    return 0.9;
+  }
+  return defaultPagePriority;
+}
+
+function getDefaultChangefreq(routePath) {
+  if (routePath === "/") {
+    return "daily";
+  }
+  if (routePath === "/services" || routePath.endsWith("-marketing")) {
+    return "weekly";
+  }
+  if (routePath === "/blog" || routePath.startsWith("/blog/")) {
+    return "monthly";
+  }
+  return defaultPageChangefreq;
+}
+
 async function resolveLastmod({ lastmod, updatedAt, source }) {
   if (lastmod) {
     return toDateOnly(lastmod);
@@ -95,8 +121,8 @@ async function discoverPageRoutes() {
     entries.push({
       path: routePath,
       source: path.join("src", "pages", file.name).replace(/\\/g, "/"),
-      changefreq: defaultPageChangefreq,
-      priority: defaultPagePriority,
+      changefreq: getDefaultChangefreq(routePath),
+      priority: getDefaultPriority(routePath),
     });
   }
 
@@ -187,8 +213,8 @@ async function generate() {
     pagesEntries.push({
       loc: toAbsoluteUrl(route.canonicalUrl || route.path),
       lastmod: await resolveLastmod(route),
-      changefreq: route.changefreq || defaultPageChangefreq,
-      priority: Number(route.priority ?? defaultPagePriority),
+      changefreq: route.changefreq || getDefaultChangefreq(route.path),
+      priority: Number(route.priority ?? getDefaultPriority(route.path)),
     });
   }
 
@@ -225,7 +251,7 @@ async function generate() {
   const robotsTxt = `User-agent: *
 Allow: /
 
-Sitemap: ${siteUrl}/sitemap-index.xml
+Sitemap: ${siteUrl}/sitemap.xml
 `;
   await writeTextFile("robots.txt", robotsTxt);
 
