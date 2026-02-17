@@ -50,7 +50,7 @@ export function VideoTestimonial({
   const getThumbnail = () => {
     if (thumbnailUrl) return thumbnailUrl;
     if (videoId) return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-    return '/favicon.png';
+    return '/favicon.ico';
   };
 
   return (
@@ -121,3 +121,4 @@ export function VideoTestimonial({
     </>
   );
 }
+

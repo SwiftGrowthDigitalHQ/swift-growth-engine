@@ -27,7 +27,7 @@ const blogPostsData: Record<string, {
     author: 'Sonu',
     date: '2024-01-15',
     readTime: '8 min read',
-    image: '/favicon.png',
+    image: '/favicon.ico',
     content: `
 # How Local Businesses Can Get More Leads Online in 2024
 
@@ -78,7 +78,7 @@ The best approach is to start with one channel and master it before moving to ot
     author: 'Sonu',
     date: '2024-01-10',
     readTime: '10 min read',
-    image: '/favicon.png',
+    image: '/favicon.ico',
     content: `
 # Google Ads for Clinics in India: Complete Guide
 
@@ -136,7 +136,7 @@ Track these metrics:
     author: 'Sonu',
     date: '2024-01-05',
     readTime: '7 min read',
-    image: '/favicon.png',
+    image: '/favicon.ico',
     content: `
 # Real Estate Lead Generation: Facebook vs Google Ads
 
@@ -198,7 +198,7 @@ Regardless of platform, have a system to follow up:
     author: 'Sonu',
     date: '2024-01-01',
     readTime: '9 min read',
-    image: '/favicon.png',
+    image: '/favicon.ico',
     content: `
 # Restaurant & Cloud Kitchen Marketing: Get More Orders
 
@@ -264,7 +264,7 @@ Track:
     author: 'Sonu',
     date: '2023-12-28',
     readTime: '6 min read',
-    image: '/favicon.png',
+    image: '/favicon.ico',
     content: `
 # WhatsApp Marketing for Small Businesses: A Beginner's Guide
 
@@ -346,7 +346,7 @@ Run Facebook/Instagram ads that open WhatsApp directly:
     author: 'Sonu',
     date: '2023-12-20',
     readTime: '8 min read',
-    image: '/favicon.png',
+    image: '/favicon.ico',
     content: `
 # Local SEO: How to Rank for 'Near Me' Searches
 
@@ -690,3 +690,4 @@ const BlogPost = () => {
 };
 
 export default BlogPost;
+
