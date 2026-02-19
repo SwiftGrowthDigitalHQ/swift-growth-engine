@@ -1,34 +1,20 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/(.*)",
       "has": [
         {
           "type": "host",
           "value": "swiftgrowthdigital.com"
         }
       ],
-      "destination": "https://www.swiftgrowthdigital.com/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.swiftgrowthdigital.com"
-        },
-        {
-          "type": "header",
-          "key": "x-forwarded-proto",
-          "value": "http"
-        }
-      ],
-      "destination": "https://www.swiftgrowthdigital.com/:path*",
+      "destination": "https://www.swiftgrowthdigital.com/$1",
       "permanent": true
     }
   ],
+
   "rewrites": [
     {
       "source": "/(.*)",
