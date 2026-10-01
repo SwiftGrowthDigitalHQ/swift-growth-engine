@@ -28,5 +28,6 @@ supabase/functions/.env.*
 # Environment / secrets - NEVER commit
 .env
 .env.*
+!.env.example
 supabase/functions/.env
 supabase/functions/.env.*

@@ -7,7 +7,7 @@ import { Gift, Check, ArrowRight, MessageCircle, Loader2, CheckCircle } from "lu
 import { Button } from "@/components/ui/button";
 import { trackConversion } from "@/lib/analytics";
 import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
-import { supabase } from "@/integrations/supabase/client";
+import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
@@ -25,6 +25,10 @@ const FreeAudit = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isSupabaseConfigured || !supabase) {
+      toast.error("The audit form is unavailable because Supabase is not configured for this app.");
+      return;
+    }
     setIsSubmitting(true);
 
     try {

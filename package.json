@@ -7,7 +7,7 @@
     "dev": "vite",
     "generate-sitemap": "node scripts/generate-sitemap.js",
     "validate-seo": "node scripts/validate-seo.js",
-    "build": "npm run generate-sitemap && vite build",
+    "build": "npm run generate-sitemap && vite build && node scripts/generate-legal-pages.js",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",

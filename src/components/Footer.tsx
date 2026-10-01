@@ -27,7 +27,7 @@ export function Footer() {
   return (
     <footer className="bg-card border-t border-border">
       <div className="container mx-auto px-4 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="inline-block">
@@ -91,6 +91,28 @@ export function Footer() {
               </Link>
               <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Contact
+              </Link>
+            </div>
+          </div>
+
+          {/* Legal */}
+          <div className="space-y-4">
+            <h4 className="font-display font-semibold text-foreground">Legal</h4>
+            <div className="flex flex-col gap-2">
+              <Link to="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Privacy Policy
+              </Link>
+              <Link to="/terms-of-service" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Terms of Service
+              </Link>
+              <Link to="/data-deletion" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Data Deletion
+              </Link>
+              <Link to="/cookie-policy" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Cookie Policy
+              </Link>
+              <Link to="/refund-policy" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Refund Policy
               </Link>
             </div>
           </div>

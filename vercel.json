@@ -20,6 +20,12 @@
       "source": "/api/webhooks/whatsapp",
       "destination": "https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-webhook"
     },
+    { "source": "/privacy-policy", "destination": "/privacy-policy.html" },
+    { "source": "/terms-of-service", "destination": "/terms-of-service.html" },
+    { "source": "/data-deletion", "destination": "/data-deletion.html" },
+    { "source": "/cookie-policy", "destination": "/cookie-policy.html" },
+    { "source": "/refund-policy", "destination": "/refund-policy.html" },
+    { "source": "/contact", "destination": "/contact.html" },
     {
       "source": "/(.*)",
       "destination": "/index.html"

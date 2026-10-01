@@ -4,7 +4,7 @@ import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
 import { PageTransition } from "@/components/PageTransition";
 import { ContactForm } from "@/components/ContactForm";
-import { Phone, Mail, MapPin, MessageCircle, Clock } from "lucide-react";
+import { Phone, Mail, MapPin, MessageCircle, Clock, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
 
@@ -21,12 +21,12 @@ const Contact = () => {
           <div className="absolute inset-0 bg-hero-glow" />
           <div className="container mx-auto px-4 relative z-10">
             <AnimatedSection className="max-w-3xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6">
-                Let's <span className="text-gradient">Talk Growth</span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-3">
+                Contact <span className="text-gradient">SwiftGrowthDigital</span>
               </h1>
+              <p className="mb-5 font-display text-xl font-semibold text-foreground">Let's Talk Growth</p>
               <p className="text-lg text-muted-foreground">
-                Ready to grow your business? We're here to help. 
-                Reach out via WhatsApp for the fastest response.
+                Ready to grow your business? Contact our team about website development, software, digital marketing, SEO, automation, and technology services. Reach out via WhatsApp for the fastest response.
               </p>
             </AnimatedSection>
           </div>
@@ -74,6 +74,24 @@ const Contact = () => {
                       </div>
                     </div>
                   </div>
+                </AnimatedSection>
+
+                {/* Website */}
+                <AnimatedSection direction="right" delay={250}>
+                  <a
+                    href="https://www.swiftgrowthdigital.com/"
+                    className="block rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                        <Globe className="h-6 w-6 text-primary" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <h4 className="mb-1 font-display font-semibold text-foreground">Website</h4>
+                        <p className="break-all text-muted-foreground">www.swiftgrowthdigital.com</p>
+                      </div>
+                    </div>
+                  </a>
                 </AnimatedSection>
 
                 {/* Phone */}

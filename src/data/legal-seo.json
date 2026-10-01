@@ -1,0 +1,36 @@
+{
+  "defaultTitle": "Swiftgrowthdigital - Digital Marketing Agency for Local Businesses in India",
+  "defaultDescription": "Complete digital growth system for Indian businesses. Website + Ads + SEO + WhatsApp that brings real customers.",
+  "pages": {
+    "/privacy-policy": {
+      "title": "Privacy Policy | SwiftGrowthDigital",
+      "description": "Learn what information SwiftGrowthDigital collects, how it is used, and how to request access, correction, or deletion.",
+      "route": "/privacy-policy"
+    },
+    "/terms-of-service": {
+      "title": "Terms of Service | SwiftGrowthDigital",
+      "description": "Read the terms that apply when you use the SwiftGrowthDigital website or engage our digital, software, and technology services.",
+      "route": "/terms-of-service"
+    },
+    "/data-deletion": {
+      "title": "Data Deletion Request | SwiftGrowthDigital",
+      "description": "How to request deletion of personal information collected or processed by SwiftGrowthDigital.",
+      "route": "/data-deletion"
+    },
+    "/cookie-policy": {
+      "title": "Cookie Policy | SwiftGrowthDigital",
+      "description": "See how SwiftGrowthDigital uses cookies and similar browser storage, including Google Analytics, and how to control them.",
+      "route": "/cookie-policy"
+    },
+    "/refund-policy": {
+      "title": "Refund Policy | SwiftGrowthDigital",
+      "description": "Understand how cancellations and refund requests are reviewed for SwiftGrowthDigital digital services and custom projects.",
+      "route": "/refund-policy"
+    },
+    "/contact": {
+      "title": "Contact SwiftGrowthDigital",
+      "description": "Contact SwiftGrowthDigital about website development, software, digital marketing, SEO, automation, or WhatsApp integrations.",
+      "route": "/contact"
+    }
+  }
+}

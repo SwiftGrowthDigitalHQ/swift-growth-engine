@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { trackConversion } from '@/lib/analytics';
 import { MessageCircle, Loader2, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 
 interface ContactFormProps {
   source?: string;
@@ -54,6 +55,11 @@ export function ContactForm({ source = 'contact_form', onSuccess }: ContactFormP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!supabase) {
+      toast.error('Contact form is unavailable because Supabase is not configured for this app.');
+      return;
+    }
     
     // Validate all fields
     if (!formData.name.trim()) {
@@ -300,7 +306,7 @@ export function ContactForm({ source = 'contact_form', onSuccess }: ContactFormP
       </Button>
 
       <p className="text-xs text-muted-foreground text-center">
-        Submitting this form does not send you a WhatsApp message. Marketing messages require the optional consent above.
+        Submitting this form does not send you a WhatsApp message. Marketing messages require the optional consent above. See our <Link className="text-primary underline underline-offset-2" to="/privacy-policy">Privacy Policy</Link> for how we handle your information.
       </p>
     </form>
   );
