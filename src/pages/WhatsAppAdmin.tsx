@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { WhatsAppInbox } from "@/components/WhatsAppInbox";
 
 type Tab = "overview" | "configuration" | "templates" | "contacts" | "campaigns" | "messages" | "webhook";
 type AdminResult = Record<string, unknown>;
@@ -336,7 +337,7 @@ export default function WhatsAppAdmin() {
           <CampaignTable campaigns={data.campaigns || []} />
         </div>}
 
-        {tab === "messages" && <section className="rounded-xl border border-border bg-card p-5"><h3 className="mb-4 font-semibold">Recent message records</h3><div className="overflow-x-auto"><table className="w-full min-w-[850px] text-left text-sm"><thead className="text-muted-foreground"><tr><th className="p-3">Date</th><th className="p-3">Direction</th><th className="p-3">Recipient</th><th className="p-3">Type</th><th className="p-3">Meta message ID</th><th className="p-3">Status</th><th className="p-3">Failure</th></tr></thead><tbody>{(data.messages || []).map((message) => <tr key={message.id} className="border-t border-border"><td className="p-3">{formatDate(message.created_at)}</td><td className="p-3">{message.direction}</td><td className="p-3">+{message.recipient_phone}</td><td className="p-3">{message.message_type}</td><td className="max-w-48 truncate p-3 font-mono text-xs">{message.meta_message_id || "—"}</td><td className="p-3"><StatusPill>{message.status}</StatusPill></td><td className="max-w-64 p-3 text-xs text-destructive">{message.error_metadata?.message || message.error_metadata?.errors?.[0]?.title || "—"}</td></tr>)}</tbody></table></div>{!data.messages?.length && <p className="py-8 text-center text-sm text-muted-foreground">No WhatsApp messages are recorded yet.</p>}</section>}
+        {tab === "messages" && <WhatsAppInbox />}
 
         {tab === "webhook" && <section className="rounded-xl border border-border bg-card p-5"><h3 className="mb-1 font-semibold">Webhook event history</h3><p className="mb-5 text-sm text-muted-foreground">Only validated, deduplicated Meta webhook events appear here.</p><div className="overflow-x-auto"><table className="w-full min-w-[700px] text-left text-sm"><thead className="text-muted-foreground"><tr><th className="p-3">Received</th><th className="p-3">Event</th><th className="p-3">Meta message ID</th><th className="p-3">Status</th><th className="p-3">Occurred</th></tr></thead><tbody>{(data.events || []).map((event) => <tr key={event.id} className="border-t border-border"><td className="p-3">{formatDate(event.received_at)}</td><td className="p-3">{event.event_type}</td><td className="max-w-56 truncate p-3 font-mono text-xs">{event.meta_message_id || "—"}</td><td className="p-3">{event.message_status ? <StatusPill>{event.message_status}</StatusPill> : "—"}</td><td className="p-3">{formatDate(event.event_timestamp)}</td></tr>)}</tbody></table></div>{!data.events?.length && <p className="py-8 text-center text-sm text-muted-foreground">No webhook events have been received.</p>}</section>}
       </div>

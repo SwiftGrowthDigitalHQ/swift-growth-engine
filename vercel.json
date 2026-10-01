@@ -20,6 +20,10 @@
       "source": "/api/webhooks/whatsapp",
       "destination": "https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-webhook"
     },
+    {
+      "source": "/api/whatsapp/media/:path*",
+      "destination": "https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-media/:path*"
+    },
     { "source": "/privacy-policy", "destination": "/privacy-policy.html" },
     { "source": "/terms-of-service", "destination": "/terms-of-service.html" },
     { "source": "/data-deletion", "destination": "/data-deletion.html" },

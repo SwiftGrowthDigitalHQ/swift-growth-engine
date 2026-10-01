@@ -8,6 +8,8 @@ import {
   normalizeRecipient,
 } from "../_shared/whatsapp.ts";
 
+const MAX_MEDIA_SIZE = 50 * 1024 * 1024; // 50MB
+
 const PUBLIC_ORIGINS = new Set([
   "https://www.swiftgrowthdigital.com",
   "https://swiftgrowthdigital.com",
@@ -225,6 +227,409 @@ async function listContacts(supabase: ReturnType<typeof createClient>, page: num
   return { contacts: data ?? [], total: count ?? 0, page, pageSize };
 }
 
+async function listConversations(supabase: ReturnType<typeof createClient>, page: number, pageSize: number) {
+  const from = page * pageSize;
+  const { data, count, error } = await supabase.from("whatsapp_conversations")
+    .select("*", { count: "exact" })
+    .order("last_message_at", { ascending: false })
+    .range(from, from + pageSize - 1);
+  if (error) throw new Error("WhatsApp conversations could not be loaded");
+  return { conversations: data ?? [], total: count ?? 0, page, pageSize };
+}
+
+async function getConversation(supabase: ReturnType<typeof createClient>, phone: string, limit: number, before?: string) {
+  const normalizedPhone = typeof phone === "string" ? normalizeRecipient(phone) : null;
+  if (!normalizedPhone) throw new Error("Invalid phone number");
+  const { data, error } = await supabase.rpc("get_whatsapp_conversation_messages", {
+    p_phone: normalizedPhone,
+    p_limit: limit,
+    p_before: before ?? null,
+  });
+  if (error) throw new Error("Conversation messages could not be loaded");
+  return { messages: data ?? [] };
+}
+
+function getMessagePreview(message: Record<string, unknown>): string {
+  const type = typeof message.message_type === "string" ? message.message_type : "";
+  const content = message.content as Record<string, unknown> | null;
+  if (type === "text" && isRecord(content) && isRecord(content.text)) {
+    const body = typeof content.text.body === "string" ? content.text.body : "";
+    return body.length > 80 ? body.slice(0, 80) + "…" : body;
+  }
+  if (type === "image") return "📷 Image";
+  if (type === "video") return "🎥 Video";
+  if (type === "document") {
+    const filename = isRecord(content) && isRecord(content.document) && typeof content.document.filename === "string"
+      ? content.document.filename
+      : "Document";
+    return `📄 ${filename}`;
+  }
+  if (type === "audio") return "🎵 Audio";
+  if (type === "sticker") return "🎭 Sticker";
+  if (type === "location") return "📍 Location";
+  if (type === "contacts") return "👤 Contact";
+  if (type === "interactive") return "🔘 Interactive";
+  if (type === "reaction") return "↩️ Reaction";
+  return type || "Message";
+}
+
+async function sendReply(
+  input: Record<string, unknown>,
+  userId: string,
+  config: ReturnType<typeof getWhatsAppConfig>,
+  supabase: ReturnType<typeof createClient>,
+) {
+  const phone = typeof input.phone === "string" ? input.phone.trim() : "";
+  const body = typeof input.body === "string" ? input.body.trim() : "";
+  if (!phone || !body) throw new Error("Phone and message body are required");
+  if (body.length > 4096) throw new Error("Message exceeds maximum length");
+
+  const normalizedPhone = normalizeRecipient(phone);
+  if (!normalizedPhone) throw new Error("Invalid recipient phone number");
+
+  if (!config.accessToken || !config.phoneNumberId || !config.apiVersion || !/^v\d+\.\d+$/.test(config.apiVersion)) {
+    throw new Error("WhatsApp API configuration is incomplete");
+  }
+
+  // Check 24-hour customer service window
+  const { data: latestInbound, error: inboundError } = await supabase.from("whatsapp_messages")
+    .select("created_at, meta_message_id")
+    .eq("recipient_phone", normalizedPhone)
+    .eq("direction", "inbound")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (inboundError) throw new Error("Failed to check conversation window");
+
+  const now = new Date();
+  const windowHours = 24;
+  const windowMs = windowHours * 60 * 60 * 1000;
+  let windowExpired = false;
+  let latestInboundAt: string | null = null;
+
+  if (latestInbound) {
+    latestInboundAt = latestInbound.created_at;
+    const inboundTime = new Date(latestInbound.created_at).getTime();
+    if (now.getTime() - inboundTime > windowMs) {
+      windowExpired = true;
+    }
+  } else {
+    // No inbound messages = window expired (no conversation context)
+    windowExpired = true;
+  }
+
+  if (windowExpired) {
+    throw new Error(
+      "Customer service window has expired. Free-form text replies are not allowed. " +
+      "Use an approved WhatsApp template via the Campaigns tab."
+    );
+  }
+
+  // Find or create lead for this phone
+  const local = normalizedPhone.slice(-10);
+  const candidates = [...new Set([normalizedPhone, local, `+${normalizedPhone}`, `+91${local}`, `91${local}`])];
+  const { data: lead, error: leadError } = await supabase.from("leads")
+    .select("id, name")
+    .in("whatsapp", candidates)
+    .limit(1)
+    .maybeSingle();
+  if (leadError) throw new Error("Lead lookup failed");
+
+  const leadId = lead?.id ?? null;
+
+  // Insert outbound message record first
+  const requestBody = {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: normalizedPhone,
+    type: "text",
+    text: { body: input.body },
+  };
+
+  const { data: message, error: insertError } = await supabase.from("whatsapp_messages").insert({
+    direction: "outbound",
+    recipient_phone: normalizedPhone,
+    contact_name: lead?.name ?? null,
+    lead_id: leadId,
+    message_type: "text",
+    content: { text: { body: input.body } },
+    status: "sending",
+    request_metadata: requestBody,
+    meta_timestamp: new Date().toISOString(),
+  }).select("id").single();
+
+  if (insertError || !message) throw new Error("Outbound message could not be recorded");
+
+  // Send via Meta Graph API
+  let apiResponse: Response;
+  let apiBody: unknown;
+  try {
+    apiResponse = await fetch(`${graphApiBase(config.apiVersion)}/${encodeURIComponent(config.phoneNumberId)}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${config.accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+      signal: AbortSignal.timeout(20_000),
+    });
+    try {
+      apiBody = await apiResponse.json();
+    } catch {
+      apiBody = null;
+    }
+  } catch {
+    await supabase.from("whatsapp_messages").update({
+      status: "failed",
+      error_metadata: { reason: "network_error", message: "Network error sending message" },
+    }).eq("id", message.id);
+    throw new Error("Network error sending message");
+  }
+
+  if (!apiResponse.ok) {
+    const details = isRecord(apiBody) ? errorDetails(apiBody.error) : { message: "Meta API rejected the message" };
+    await supabase.from("whatsapp_messages").update({
+      status: "failed",
+      error_metadata: details,
+      response_metadata: { http_status: apiResponse.status },
+    }).eq("id", message.id);
+    throw new Error("Meta API rejected the message: " + (details.message ?? "unknown error"));
+  }
+
+  const messages = isRecord(apiBody) && Array.isArray(apiBody.messages) ? apiBody.messages : [];
+  const metaMessageId = isRecord(messages[0]) && typeof messages[0].id === "string" ? messages[0].id : null;
+  if (!metaMessageId) {
+    await supabase.from("whatsapp_messages").update({
+      status: "failed",
+      error_metadata: { reason: "missing_meta_message_id", message: "Meta response missing message ID" },
+      response_metadata: { http_status: apiResponse.status },
+    }).eq("id", message.id);
+    throw new Error("Meta response missing message ID");
+  }
+
+  const responseMetadata: Record<string, unknown> = { http_status: apiResponse.status };
+  const acceptedContacts = isRecord(apiBody) && Array.isArray(apiBody.contacts) ? apiBody.contacts : null;
+  if (acceptedContacts) responseMetadata.contact_count = acceptedContacts.length;
+  if (isRecord(messages[0]) && typeof messages[0].message_status === "string") {
+    responseMetadata.message_status = messages[0].message_status;
+  }
+
+  const { error: updateError } = await supabase.from("whatsapp_messages").update({
+    meta_message_id: metaMessageId,
+    status: "sent",
+    meta_timestamp: new Date().toISOString(),
+    response_metadata: responseMetadata,
+  }).eq("id", message.id);
+
+  if (updateError) throw new Error("Message sent but state could not be updated");
+
+  if (leadId) {
+    await supabase.from("leads").update({ whatsapp_last_message_at: new Date().toISOString() }).eq("id", leadId);
+  }
+
+  return { 
+    messageId: message.id, 
+    metaMessageId, 
+    status: "sent",
+    windowExpiresAt: latestInboundAt ? new Date(new Date(latestInboundAt).getTime() + windowMs).toISOString() : null
+  };
+}
+
+async function getMedia(
+  input: Record<string, unknown>,
+  config: ReturnType<typeof getWhatsAppConfig>,
+  supabase: ReturnType<typeof createClient>,
+) {
+  const messageId = typeof input.messageId === "string" ? input.messageId : "";
+  if (!messageId) throw new Error("Message ID is required");
+
+  const { data: message, error } = await supabase.from("whatsapp_messages")
+    .select("id, direction, recipient_phone, message_type, content, meta_message_id")
+    .eq("id", messageId)
+    .maybeSingle();
+
+  if (error) throw new Error("Message not found");
+  if (!message) throw new Error("Message not found");
+  if (message.direction !== "inbound") throw new Error("Media can only be retrieved for inbound messages");
+
+  const content = message.content as Record<string, unknown> | null;
+  if (!content) throw new Error("Message has no content");
+
+  let mediaId: string | null = null;
+  let mimeType: string | null = null;
+  let filename: string | null = null;
+
+  const type = typeof message.message_type === "string" ? message.message_type : "";
+  if (type === "image" && isRecord(content.image)) {
+    mediaId = typeof content.image.id === "string" ? content.image.id : null;
+    mimeType = typeof content.image.mime_type === "string" ? content.image.mime_type : "image/jpeg";
+    filename = typeof content.image.caption === "string" && content.image.caption.length > 0
+      ? content.image.caption.slice(0, 100) + ".jpg"
+      : "image.jpg";
+  } else if (type === "video" && isRecord(content.video)) {
+    mediaId = typeof content.video.id === "string" ? content.video.id : null;
+    mimeType = typeof content.video.mime_type === "string" ? content.video.mime_type : "video/mp4";
+    filename = "video.mp4";
+  } else if (type === "document" && isRecord(content.document)) {
+    mediaId = typeof content.document.id === "string" ? content.document.id : null;
+    mimeType = typeof content.document.mime_type === "string" ? content.document.mime_type : "application/octet-stream";
+    filename = typeof content.document.filename === "string" ? content.document.filename : "document";
+  } else if (type === "audio" && isRecord(content.audio)) {
+    mediaId = typeof content.audio.id === "string" ? content.audio.id : null;
+    mimeType = typeof content.audio.mime_type === "string" ? content.audio.mime_type : "audio/ogg";
+    filename = "audio.ogg";
+  } else if (type === "sticker" && isRecord(content.sticker)) {
+    mediaId = typeof content.sticker.id === "string" ? content.sticker.id : null;
+    mimeType = typeof content.sticker.mime_type === "string" ? content.sticker.mime_type : "image/webp";
+    filename = "sticker.webp";
+  } else {
+    throw new Error("Message type does not contain downloadable media");
+  }
+
+  if (!mediaId) throw new Error("Media ID not found in message");
+
+  if (!config.accessToken || !config.apiVersion || !/^v\d+\.\d+$/.test(config.apiVersion)) {
+    throw new Error("WhatsApp API configuration incomplete");
+  }
+
+  // Get media URL from Meta
+  const mediaUrl = `${graphApiBase(config.apiVersion)}/${encodeURIComponent(mediaId)}`;
+  const mediaResponse = await fetch(mediaUrl, {
+    headers: { Authorization: `Bearer ${config.accessToken}` },
+    signal: AbortSignal.timeout(15_000),
+  });
+
+  if (!mediaResponse.ok) {
+    const errBody = await mediaResponse.json().catch(() => ({}));
+    const details = isRecord(errBody) ? errorDetails(errBody.error) : { message: "Failed to get media URL" };
+    throw new Error("Failed to get media URL: " + (details.message ?? "unknown error"));
+  }
+
+  const mediaData = await mediaResponse.json();
+  const mediaDownloadUrl = isRecord(mediaData) && typeof mediaData.url === "string" ? mediaData.url : null;
+  if (!mediaDownloadUrl) throw new Error("Media URL not found in Meta response");
+
+  // Download media with size limit
+  const downloadResponse = await fetch(mediaDownloadUrl, {
+    headers: { Authorization: `Bearer ${config.accessToken}` },
+    signal: AbortSignal.timeout(30_000),
+  });
+
+  if (!downloadResponse.ok) throw new Error("Failed to download media");
+
+  const contentLength = downloadResponse.headers.get("content-length");
+  if (contentLength && parseInt(contentLength, 10) > MAX_MEDIA_SIZE) {
+    throw new Error("Media file exceeds size limit");
+  }
+
+  const mediaBytes = await downloadResponse.arrayBuffer();
+  if (mediaBytes.byteLength > MAX_MEDIA_SIZE) {
+    throw new Error("Media file exceeds size limit");
+  }
+
+  const actualMimeType = downloadResponse.headers.get("content-type") ?? mimeType;
+
+  return new Response(new Uint8Array(mediaBytes), {
+    status: 200,
+    headers: {
+      "Content-Type": actualMimeType,
+      "Content-Disposition": `inline; filename="${filename?.replace(/"/g, "") || "media"}"`,
+      "Content-Length": mediaBytes.byteLength.toString(),
+      "Cache-Control": "private, max-age=3600",
+    },
+  });
+}
+
+async function markRead(
+  input: Record<string, unknown>,
+  config: ReturnType<typeof getWhatsAppConfig>,
+  supabase: ReturnType<typeof createClient>,
+) {
+  const phone = typeof input.phone === "string" ? input.phone.trim() : "";
+  const normalizedPhone = phone ? normalizeRecipient(phone) : null;
+  if (!normalizedPhone) throw new Error("Valid phone number is required");
+
+  if (!config.accessToken || !config.phoneNumberId || !config.apiVersion || !/^v\d+\.\d+$/.test(config.apiVersion)) {
+    throw new Error("WhatsApp API configuration is incomplete");
+  }
+
+  // Get the latest unread inbound message for this phone
+  const { data: latestUnread, error: unreadError } = await supabase.from("whatsapp_messages")
+    .select("id, meta_message_id, created_at")
+    .eq("recipient_phone", normalizedPhone)
+    .eq("direction", "inbound")
+    .eq("status", "received")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (unreadError) throw new Error("Failed to find unread messages");
+  if (!latestUnread || !latestUnread.meta_message_id) {
+    // No unread messages with valid Meta message ID - just update local status
+    const { error: localError } = await supabase.from("whatsapp_messages")
+      .update({ status: "read" })
+      .eq("recipient_phone", normalizedPhone)
+      .eq("direction", "inbound")
+      .eq("status", "received");
+    if (localError) throw new Error("Messages could not be marked as read locally");
+    return { updated: true, metaRead: false, reason: "no_meta_message_id" };
+  }
+
+  // Call Meta Graph API to mark as read
+  const markReadUrl = `${graphApiBase(config.apiVersion)}/${encodeURIComponent(config.phoneNumberId)}/messages`;
+  let metaResponse: Response;
+  try {
+    metaResponse = await fetch(markReadUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        status: "read",
+        message_id: latestUnread.meta_message_id,
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch {
+    // Meta API unavailable - update locally but report failure
+    const { error: localError } = await supabase.from("whatsapp_messages")
+      .update({ status: "read" })
+      .eq("recipient_phone", normalizedPhone)
+      .eq("direction", "inbound")
+      .eq("status", "received");
+    if (localError) throw new Error("Messages could not be marked as read locally");
+    return { updated: true, metaRead: false, reason: "meta_api_unavailable" };
+  }
+
+  if (!metaResponse.ok) {
+    const errorBody = await metaResponse.json().catch(() => ({}));
+    const details = isRecord(errorBody) ? errorDetails(errorBody.error) : { message: "Meta mark-read failed" };
+    // Update locally anyway since admin has seen the message
+    const { error: localError } = await supabase.from("whatsapp_messages")
+      .update({ status: "read" })
+      .eq("recipient_phone", normalizedPhone)
+      .eq("direction", "inbound")
+      .eq("status", "received");
+    if (localError) throw new Error("Messages could not be marked as read locally");
+    return { 
+      updated: true, 
+      metaRead: false, 
+      reason: "meta_api_rejected",
+      metaError: details.message ?? "Meta mark-read rejected"
+    };
+  }
+
+  // Meta succeeded - update local status
+  const { error: localError } = await supabase.from("whatsapp_messages")
+    .update({ status: "read" })
+    .eq("recipient_phone", normalizedPhone)
+    .eq("direction", "inbound")
+    .eq("status", "received");
+  if (localError) throw new Error("Messages could not be marked as read locally");
+
+  return { updated: true, metaRead: true };
+}
+
 function validComponents(value: unknown): value is Record<string, unknown>[] {
   if (value === undefined || value === null) return true;
   if (!Array.isArray(value) || value.length > 10) return false;
@@ -360,6 +765,29 @@ async function handleAction(
     if (error) throw new Error("WhatsApp webhook events could not be loaded");
     return { events: data ?? [] };
   }
+  if (action === "list_conversations") {
+    const page = typeof input.page === "number" && Number.isInteger(input.page) ? Math.max(0, Math.min(10_000, input.page)) : 0;
+    const pageSize = typeof input.pageSize === "number" && Number.isInteger(input.pageSize) ? Math.min(Math.max(1, input.pageSize), 100) : 30;
+    return listConversations(supabase, page, pageSize);
+  }
+  if (action === "get_conversation") {
+    const phone = typeof input.phone === "string" ? input.phone : "";
+    const limit = typeof input.limit === "number" && Number.isInteger(input.limit) ? Math.min(Math.max(1, input.limit), 200) : 50;
+    const before = typeof input.before === "string" ? input.before : undefined;
+    return getConversation(supabase, phone, limit, before);
+  }
+  if (action === "send_reply") {
+    const config = getWhatsAppConfig();
+    return sendReply(input, user.id, config, supabase);
+  }
+  if (action === "get_media") {
+    const config = getWhatsAppConfig();
+    return getMedia(input, config, supabase);
+  }
+  if (action === "mark_read") {
+    const config = getWhatsAppConfig();
+    return markRead(input, config, supabase);
+  }
   throw new Error("Unsupported WhatsApp management action");
 }
 
@@ -378,6 +806,7 @@ serve(async (request) => {
     if (!isRecord(input)) return jsonResponse(400, { error: "Invalid request" }, origin);
     const { user, supabase } = await requireAdmin(request);
     const result = await handleAction(input, user, supabase);
+    if (result instanceof Response) return result;
     return jsonResponse(200, { success: true, ...result }, origin);
   } catch (error) {
     if (error instanceof Response) return jsonResponse(error.status, { error: await error.text() }, origin);

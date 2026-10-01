@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.whatsapp-campaign-worker]
 verify_jwt = false
+
+[functions.whatsapp-media]
+verify_jwt = true
