@@ -18,7 +18,7 @@
   "rewrites": [
     {
       "source": "/api/webhooks/whatsapp",
-      "destination": "https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-webhook"
+      "destination": "https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-webhook"
     },
     { "source": "/privacy-policy", "destination": "/privacy-policy.html" },
     { "source": "/terms-of-service", "destination": "/terms-of-service.html" },
