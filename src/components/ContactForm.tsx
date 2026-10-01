@@ -1,7 +1,9 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { trackConversion } from '@/lib/analytics';
@@ -42,10 +44,11 @@ export function ContactForm({ source = 'contact_form', onSuccess }: ContactFormP
     business_type: '',
     city: '',
     whatsapp: '',
+    whatsapp_opt_in: false,
   });
 
   const resetForm = () => {
-    setFormData({ name: '', business_type: '', city: '', whatsapp: '' });
+    setFormData({ name: '', business_type: '', city: '', whatsapp: '', whatsapp_opt_in: false });
     setSubmissionResult(null);
   };
 
@@ -86,6 +89,7 @@ export function ContactForm({ source = 'contact_form', onSuccess }: ContactFormP
           business_type: formData.business_type,
           city: formData.city.trim(),
           whatsapp: cleanedWhatsapp,
+          whatsapp_opt_in: formData.whatsapp_opt_in,
           source,
         },
       });
@@ -111,16 +115,6 @@ export function ContactForm({ source = 'contact_form', onSuccess }: ContactFormP
       });
 
       toast.success('🎉 Thank you! Your request has been received.');
-
-      // Open WhatsApp with pre-filled message after a short delay
-      setTimeout(() => {
-        const message = encodeURIComponent(
-          `Hi, I'm ${formData.name.trim()} from ${formData.city.trim()}.\n\n` +
-          `I run a ${formData.business_type} and I'm interested in growing my business with digital marketing.\n\n` +
-          `Please share more details about your services.`
-        );
-        window.open(`https://wa.me/919229721835?text=${message}`, '_blank');
-      }, 2000);
 
       onSuccess?.();
     } catch (err) {
@@ -152,13 +146,11 @@ export function ContactForm({ source = 'contact_form', onSuccess }: ContactFormP
           We've received your request for <span className="text-primary font-medium">{submissionResult.businessType}</span> marketing.
         </p>
         <p className="text-sm text-muted-foreground mb-6">
-          Our team will contact you on WhatsApp within 1 hour during business hours.
+          Your request has been saved. Start a WhatsApp conversation whenever you’re ready.
         </p>
-        <div className="bg-card/50 rounded-xl p-4 border border-border mb-6">
-          <p className="text-sm text-muted-foreground">
-            📱 Redirecting to WhatsApp to start the conversation...
-          </p>
-        </div>
+        <a href={WHATSAPP_CONTACT_URL} target="_blank" rel="noopener noreferrer" className="inline-block mb-6">
+          <Button variant="whatsapp" className="gap-2"><MessageCircle className="h-4 w-4" /> Chat on WhatsApp</Button>
+        </a>
         <Button
           variant="outline"
           size="sm"
@@ -194,7 +186,7 @@ export function ContactForm({ source = 'contact_form', onSuccess }: ContactFormP
             <RefreshCw className="w-4 h-4" />
             Try Again
           </Button>
-          <a href="https://wa.me/919229721835?text=Hi%2C%20I%20had%20trouble%20submitting%20the%20contact%20form.%20Please%20help." target="_blank" rel="noopener noreferrer">
+          <a href={WHATSAPP_CONTACT_URL} target="_blank" rel="noopener noreferrer">
             <Button variant="whatsapp" className="gap-2 w-full">
               <MessageCircle className="w-4 h-4" />
               Contact on WhatsApp
@@ -274,6 +266,19 @@ export function ContactForm({ source = 'contact_form', onSuccess }: ContactFormP
         </p>
       </div>
 
+      <label className="flex items-start gap-3 rounded-lg border border-border bg-background/40 p-3 text-sm">
+        <Checkbox
+          id="whatsapp-opt-in"
+          checked={formData.whatsapp_opt_in}
+          onCheckedChange={(checked) => setFormData({ ...formData, whatsapp_opt_in: checked === true })}
+          disabled={isSubmitting}
+          className="mt-0.5"
+        />
+        <span className="text-muted-foreground">
+          I agree to receive marketing updates from SwiftGrowthDigital on WhatsApp. This is optional; I can ask to stop messages at any time.
+        </span>
+      </label>
+
       <Button
         type="submit"
         variant="whatsapp"
@@ -295,7 +300,7 @@ export function ContactForm({ source = 'contact_form', onSuccess }: ContactFormP
       </Button>
 
       <p className="text-xs text-muted-foreground text-center">
-        ✅ We'll contact you on WhatsApp within 1 hour during business hours (10 AM - 7 PM).
+        Submitting this form does not send you a WhatsApp message. Marketing messages require the optional consent above.
       </p>
     </form>
   );

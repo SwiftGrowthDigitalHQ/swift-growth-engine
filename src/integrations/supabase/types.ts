@@ -26,6 +26,12 @@ export type Database = {
           status: string | null
           updated_at: string
           whatsapp: string
+          whatsapp_opt_in: boolean
+          whatsapp_opt_in_at: string | null
+          whatsapp_opt_in_source: string | null
+          whatsapp_opt_out: boolean
+          whatsapp_opt_out_at: string | null
+          whatsapp_last_message_at: string | null
         }
         Insert: {
           business_type: string
@@ -38,6 +44,12 @@ export type Database = {
           status?: string | null
           updated_at?: string
           whatsapp: string
+          whatsapp_opt_in?: boolean
+          whatsapp_opt_in_at?: string | null
+          whatsapp_opt_in_source?: string | null
+          whatsapp_opt_out?: boolean
+          whatsapp_opt_out_at?: string | null
+          whatsapp_last_message_at?: string | null
         }
         Update: {
           business_type?: string
@@ -50,6 +62,12 @@ export type Database = {
           status?: string | null
           updated_at?: string
           whatsapp?: string
+          whatsapp_opt_in?: boolean
+          whatsapp_opt_in_at?: string | null
+          whatsapp_opt_in_source?: string | null
+          whatsapp_opt_out?: boolean
+          whatsapp_opt_out_at?: string | null
+          whatsapp_last_message_at?: string | null
         }
         Relationships: []
       }

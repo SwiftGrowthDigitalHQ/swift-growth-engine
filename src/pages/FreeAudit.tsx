@@ -6,7 +6,9 @@ import { PageTransition } from "@/components/PageTransition";
 import { Gift, Check, ArrowRight, MessageCircle, Loader2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackConversion } from "@/lib/analytics";
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
 
@@ -16,6 +18,7 @@ const FreeAudit = () => {
     businessType: "",
     city: "",
     whatsapp: "",
+    whatsapp_opt_in: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -40,6 +43,7 @@ const FreeAudit = () => {
           business_type: formData.businessType,
           city: formData.city.trim(),
           whatsapp: cleanedWhatsapp,
+          whatsapp_opt_in: formData.whatsapp_opt_in,
           source: 'free_audit',
         },
       });
@@ -52,22 +56,8 @@ const FreeAudit = () => {
       setIsSuccess(true);
       toast.success('Your audit request has been submitted!');
 
-      // Open WhatsApp with the message after a short delay
-      setTimeout(() => {
-        const message = encodeURIComponent(
-          `Hi! I want a FREE Growth Audit.\n\nName: ${formData.name}\nBusiness: ${formData.businessType}\nCity: ${formData.city}\nWhatsApp: ${formData.whatsapp}`
-        );
-        window.open(`https://wa.me/919229721835?text=${message}`, "_blank");
-      }, 1500);
     } catch (err) {
-      console.error('Free audit submission error:', err);
-      toast.error('Something went wrong. Opening WhatsApp directly.');
-      
-      // Fallback to direct WhatsApp
-      const message = encodeURIComponent(
-        `Hi! I want a FREE Growth Audit.\n\nName: ${formData.name}\nBusiness: ${formData.businessType}\nCity: ${formData.city}\nWhatsApp: ${formData.whatsapp}`
-      );
-      window.open(`https://wa.me/919229721835?text=${message}`, "_blank");
+      toast.error('Something went wrong. Please try again or contact us on WhatsApp.');
     } finally {
       setIsSubmitting(false);
     }
@@ -137,8 +127,11 @@ const FreeAudit = () => {
                           Your free audit request has been received.
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Redirecting to WhatsApp...
+                          Start a WhatsApp conversation whenever you’re ready.
                         </p>
+                        <a className="mt-5 inline-flex" href={WHATSAPP_CONTACT_URL} target="_blank" rel="noopener noreferrer">
+                          <Button variant="whatsapp"><MessageCircle className="mr-2 h-4 w-4" /> Chat on WhatsApp</Button>
+                        </a>
                       </div>
                     ) : (
                       <>
@@ -213,6 +206,18 @@ const FreeAudit = () => {
                               placeholder="Enter your WhatsApp number"
                             />
                           </div>
+
+                          <label className="flex items-start gap-3 rounded-lg border border-border bg-background/40 p-3 text-sm">
+                            <Checkbox
+                              checked={formData.whatsapp_opt_in}
+                              onCheckedChange={(checked) => setFormData({ ...formData, whatsapp_opt_in: checked === true })}
+                              disabled={isSubmitting}
+                              className="mt-0.5"
+                            />
+                            <span className="text-muted-foreground">
+                              I agree to receive marketing updates from SwiftGrowthDigital on WhatsApp. This is optional; I can ask to stop messages at any time.
+                            </span>
+                          </label>
                           
                           <Button
                             type="submit"

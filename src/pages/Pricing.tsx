@@ -1,3 +1,4 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
@@ -73,7 +74,7 @@ const plans = [
 ];
 
 const Pricing = () => {
-  const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I'm%20interested%20in%20your%20services";
+  const whatsappLink = WHATSAPP_CONTACT_URL;
 
   return (
     <div className="min-h-screen bg-background">

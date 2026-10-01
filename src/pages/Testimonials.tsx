@@ -1,3 +1,4 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -136,7 +137,7 @@ const categories = ["All", "Clinic", "Real Estate", "Restaurant"];
 
 const Testimonials = () => {
   const [activeCategory, setActiveCategory] = useState("All");
-  const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I%20saw%20your%20testimonials%20and%20want%20to%20discuss%20my%20business";
+  const whatsappLink = WHATSAPP_CONTACT_URL;
 
   const filteredTestimonials = activeCategory === "All" 
     ? testimonials 

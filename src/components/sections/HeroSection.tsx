@@ -1,3 +1,4 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { ArrowRight, MessageCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSound } from "@/hooks/use-sound";
@@ -5,7 +6,7 @@ import { useParallax } from "@/hooks/use-parallax";
 
 export function HeroSection() {
   const { playClick, playTap } = useSound();
-  const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I%20want%20to%20grow%20my%20business";
+  const whatsappLink = WHATSAPP_CONTACT_URL;
   const parallaxSlow = useParallax(0.15);
   const parallaxMedium = useParallax(0.25);
 

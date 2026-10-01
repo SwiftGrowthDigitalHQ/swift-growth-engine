@@ -1,3 +1,4 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
 
 const LocalBusinessMarketing = () => {
-  const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I%20run%20a%20local%20business%20and%20want%20to%20grow";
+  const whatsappLink = WHATSAPP_CONTACT_URL;
 
   const problems = [
     "Customers search online but can't find you",

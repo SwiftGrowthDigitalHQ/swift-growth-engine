@@ -1,3 +1,4 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
 
 const RealEstateMarketing = () => {
-  const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I'm%20in%20real%20estate%20and%20want%20to%20generate%20more%20leads";
+  const whatsappLink = WHATSAPP_CONTACT_URL;
 
   const problems = [
     "Paying for leads that never convert",

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,6 +29,8 @@ import CaseStudies from "./pages/CaseStudies";
 import Testimonials from "./pages/Testimonials";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
+
+const WhatsAppAdmin = lazy(() => import("./pages/WhatsAppAdmin"));
 
 const queryClient = new QueryClient();
 
@@ -62,6 +65,7 @@ const App = () => (
             <Route path="/case-studies" element={<CaseStudies />} />
             <Route path="/testimonials" element={<Testimonials />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/admin/whatsapp" element={<Suspense fallback={<main className="min-h-screen bg-background p-8 text-muted-foreground">Loading admin…</main>}><WhatsAppAdmin /></Suspense>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

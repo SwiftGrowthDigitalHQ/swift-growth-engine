@@ -1,3 +1,4 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { X, Send, Bot, User, Loader2, Sparkles, ArrowRight, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -261,7 +262,7 @@ export function UnifiedChatWidget() {
     }
   };
 
-  const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I%20want%20a%20free%20growth%20plan%20for%20my%20business";
+  const whatsappLink = WHATSAPP_CONTACT_URL;
 
   const getCurrentQuickOptions = (): QuickOption[] => {
     switch (qualificationStep) {

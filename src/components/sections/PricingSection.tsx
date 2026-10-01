@@ -1,3 +1,4 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { Check, ArrowRight, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
@@ -53,7 +54,7 @@ const plans = [
 ];
 
 export function PricingSection() {
-  const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I'm%20interested%20in%20your%20services";
+  const whatsappLink = WHATSAPP_CONTACT_URL;
 
   return (
     <section className="py-20 md:py-28 relative">

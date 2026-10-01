@@ -16,8 +16,12 @@ const STORAGE_KEY = 'swiftgrowth-sound-enabled';
 const VOLUME = 0.12; // 12% volume - subtle but audible
 
 // Web Audio API sound generators
+type WindowWithWebkitAudioContext = Window & { webkitAudioContext?: typeof AudioContext };
+
 const createAudioContext = () => {
-  return new (window.AudioContext || (window as any).webkitAudioContext)();
+  const AudioContextConstructor = window.AudioContext || (window as WindowWithWebkitAudioContext).webkitAudioContext;
+  if (!AudioContextConstructor) throw new Error('Web Audio is not supported in this browser');
+  return new AudioContextConstructor();
 };
 
 const playTone = (

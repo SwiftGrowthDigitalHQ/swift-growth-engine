@@ -1,3 +1,4 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
 
 const ClinicMarketing = () => {
-  const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I%20run%20a%20clinic%20and%20want%20to%20grow%20my%20patient%20base";
+  const whatsappLink = WHATSAPP_CONTACT_URL;
 
   const problems = [
     "Patients can't find your clinic on Google",

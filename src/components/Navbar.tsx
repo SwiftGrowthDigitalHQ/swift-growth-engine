@@ -1,3 +1,4 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Phone } from "lucide-react";
@@ -22,7 +23,7 @@ export function Navbar() {
   const location = useLocation();
   const { playTap, playClick } = useSound();
 
-  const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I%20want%20to%20grow%20my%20business";
+  const whatsappLink = WHATSAPP_CONTACT_URL;
 
   useEffect(() => {
     const handleScroll = () => {

@@ -1,3 +1,4 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { useParams, Link } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
@@ -614,7 +615,7 @@ const BlogPost = () => {
                     Get a FREE growth audit and customized marketing plan.
                   </p>
                   <a
-                    href="https://wa.me/919229721835?text=Hi%2C%20I%20read%20your%20blog%20and%20want%20to%20discuss%20my%20business"
+                    href={WHATSAPP_CONTACT_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -663,7 +664,7 @@ const BlogPost = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a
-                  href="https://wa.me/919229721835?text=Hi%2C%20I%20want%20a%20free%20growth%20audit"
+                  href={WHATSAPP_CONTACT_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

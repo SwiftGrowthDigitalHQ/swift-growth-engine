@@ -1,3 +1,4 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { Link } from "react-router-dom";
 import { Phone, Mail, MapPin } from "lucide-react";
 
@@ -21,7 +22,7 @@ const LinkedInIcon = () => (
 );
 
 export function Footer() {
-  const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I%20want%20to%20grow%20my%20business";
+  const whatsappLink = WHATSAPP_CONTACT_URL;
 
   return (
     <footer className="bg-card border-t border-border">

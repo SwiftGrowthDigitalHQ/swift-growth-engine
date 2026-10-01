@@ -1,3 +1,4 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
 
 const RestaurantMarketing = () => {
-  const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I%20run%20a%20restaurant%2Fcloud%20kitchen%20and%20want%20more%20orders";
+  const whatsappLink = WHATSAPP_CONTACT_URL;
 
   const problems = [
     "Zomato and Swiggy taking huge commissions",

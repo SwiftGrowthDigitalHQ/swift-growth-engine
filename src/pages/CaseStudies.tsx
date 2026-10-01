@@ -1,3 +1,4 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
@@ -111,7 +112,7 @@ const caseStudies = [
 ];
 
 const CaseStudies = () => {
-  const whatsappLink = "https://wa.me/919229721835?text=Hi%2C%20I%20saw%20your%20case%20studies%20and%20want%20similar%20results%20for%20my%20business";
+  const whatsappLink = WHATSAPP_CONTACT_URL;
 
   return (
     <div className="min-h-screen bg-background">

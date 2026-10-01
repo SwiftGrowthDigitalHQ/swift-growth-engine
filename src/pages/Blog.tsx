@@ -1,3 +1,4 @@
+import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
@@ -195,7 +196,7 @@ const Blog = () => {
                 Join 500+ business owners who get weekly digital marketing tips directly on WhatsApp.
               </p>
               <a
-                href="https://wa.me/919229721835?text=Hi%2C%20I%20want%20to%20subscribe%20to%20marketing%20tips"
+                href={WHATSAPP_CONTACT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
               >
