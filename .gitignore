@@ -24,3 +24,9 @@ supabase/functions/.env.*
 *.njsproj
 *.sln
 *.sw?
+
+# Environment / secrets - NEVER commit
+.env
+.env.*
+supabase/functions/.env
+supabase/functions/.env.*
