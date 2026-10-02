@@ -50,12 +50,70 @@ async function markEventProcessed(supabase: ReturnType<typeof getAdminClient>, e
   if (error) throw new Error("Webhook event processing state could not be stored");
 }
 
-async function findLeadId(supabase: ReturnType<typeof getAdminClient>, phone: string): Promise<string | null> {
-  const local = phone.slice(-10);
-  const candidates = [...new Set([phone, local, `+${phone}`, `+91${local}`, `91${local}`])];
-  const { data, error } = await supabase.from("leads").select("id").in("whatsapp", candidates).limit(1).maybeSingle();
-  if (error) throw new Error("Webhook contact lookup failed");
-  return typeof data?.id === "string" ? data.id : null;
+async function findOrCreateLeadId(
+  supabase: ReturnType<typeof getAdminClient>,
+  phone: string,
+  profileName: string | null,
+): Promise<string> {
+  const normalizedPhone = phone; // already normalized by normalizeRecipient()
+  
+  // Try to find existing lead by normalized WhatsApp
+  const { data: existingLead, error: findError } = await supabase
+    .from("leads")
+    .select("id, name")
+    .eq("whatsapp_normalized", normalizedPhone)
+    .maybeSingle();
+  
+  if (findError) throw new Error("Webhook contact lookup failed");
+  
+  if (existingLead) {
+    // Existing lead found - return its ID
+    return existingLead.id;
+  }
+  
+  // No existing lead - create new one using upsert to handle race conditions
+  // The unique index on whatsapp_normalized will prevent duplicates
+  const leadName = profileName && profileName.trim() ? profileName.trim() : "WhatsApp Contact";
+  
+  const { data: newLead, error: upsertError } = await supabase
+    .from("leads")
+    .upsert({
+      name: leadName,
+      business_type: null,
+      city: null,
+      whatsapp: `+${normalizedPhone}`, // Store with + prefix for display
+      whatsapp_normalized: normalizedPhone,
+      source: "whatsapp_inbound",
+      status: "new",
+      whatsapp_opt_in: false,
+      whatsapp_opt_out: false,
+    }, {
+      onConflict: "whatsapp_normalized",
+      ignoreDuplicates: false, // We want to get the existing or new row
+    })
+    .select("id")
+    .maybeSingle();
+  
+  if (upsertError) {
+    // If upsert failed due to race condition, try to find the lead again
+    const { data: retryLead, error: retryError } = await supabase
+      .from("leads")
+      .select("id")
+      .eq("whatsapp_normalized", normalizedPhone)
+      .maybeSingle();
+    
+    if (retryError || !retryLead) {
+      throw new Error("WhatsApp contact could not be created or found");
+    }
+    return retryLead.id;
+  }
+  
+  if (!newLead) {
+    throw new Error("WhatsApp contact creation returned no ID");
+  }
+  
+  console.info(JSON.stringify({ event: "whatsapp_lead_auto_created", phone: normalizedPhone, lead_id: newLead.id }));
+  return newLead.id;
 }
 
 function eventMetadata(
@@ -97,7 +155,10 @@ async function processIncomingMessage(
   });
   const { id: _id, from: _from, timestamp: _timestamp, type: _type, ...content } = message;
   const contactName = contactNames.get(message.from) || null;
-  const leadId = await findLeadId(supabase, phone);
+  
+  // Find or create lead for this phone number
+  const leadId = await findOrCreateLeadId(supabase, phone, contactName);
+  
   const { error: messageError } = await supabase.from("whatsapp_messages").upsert({
     direction: "inbound",
     recipient_phone: phone,
@@ -112,19 +173,27 @@ async function processIncomingMessage(
   }, { onConflict: "meta_message_id", ignoreDuplicates: true });
   if (messageError) throw new Error("Incoming WhatsApp message could not be stored");
 
-  if (leadId) {
-    const update: Record<string, unknown> = { whatsapp_last_message_at: occurredAt || new Date().toISOString() };
-    const textBody = isRecord(message.text) && typeof message.text.body === "string" ? message.text.body : "";
-    if (/^\s*(stop|unsubscribe|cancel|end|quit)\s*[.!]*\s*$/i.test(textBody)) {
-      update.whatsapp_opt_out = true;
-      update.whatsapp_opt_out_at = occurredAt || new Date().toISOString();
-      update.whatsapp_opt_in = false;
-      update.whatsapp_opt_in_at = null;
-      update.whatsapp_opt_in_source = null;
-    }
-    const { error: leadError } = await supabase.from("leads").update(update).eq("id", leadId);
-    if (leadError) throw new Error("WhatsApp contact state could not be updated");
+  // Update lead's last message timestamp and handle STOP opt-out
+  const update: Record<string, unknown> = { whatsapp_last_message_at: occurredAt || new Date().toISOString() };
+  const textBody = isRecord(message.text) && typeof message.text.body === "string" ? message.text.body : "";
+  if (/^\s*(stop|unsubscribe|cancel|end|quit)\s*[.!]*\s*$/i.test(textBody)) {
+    update.whatsapp_opt_out = true;
+    update.whatsapp_opt_out_at = occurredAt || new Date().toISOString();
+    update.whatsapp_opt_in = false;
+    update.whatsapp_opt_in_at = null;
+    update.whatsapp_opt_in_source = null;
   }
+  const { error: leadError } = await supabase.from("leads").update(update).eq("id", leadId);
+  if (leadError) throw new Error("WhatsApp contact state could not be updated");
+  
+  // Evaluate batch assignment rules for this contact
+  try {
+    await supabase.rpc("evaluate_batch_rules_for_contact", { p_lead_id: leadId });
+  } catch (ruleError) {
+    // Log but don't fail the webhook if rule evaluation fails
+    console.error(JSON.stringify({ event: "batch_rule_evaluation_failed", lead_id: leadId, error: ruleError instanceof Error ? ruleError.message : "unknown" }));
+  }
+  
   await markEventProcessed(supabase, key);
   return { recorded: inserted, duplicate: !inserted };
 }

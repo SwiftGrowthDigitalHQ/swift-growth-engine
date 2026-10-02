@@ -10,6 +10,13 @@ import {
 
 const MAX_MEDIA_SIZE = 50 * 1024 * 1024; // 50MB
 
+const MEDIA_LIMITS: Record<string, { maxSize: number; allowedMimeTypes: string[]; allowedExtensions: string[] }> = {
+  image: { maxSize: 5 * 1024 * 1024, allowedMimeTypes: ["image/jpeg", "image/png"], allowedExtensions: [".jpg", ".jpeg", ".png"] },
+  video: { maxSize: 16 * 1024 * 1024, allowedMimeTypes: ["video/mp4", "video/3gpp", "video/quicktime"], allowedExtensions: [".mp4", ".3gp", ".mov"] },
+  audio: { maxSize: 16 * 1024 * 1024, allowedMimeTypes: ["audio/ogg", "audio/mp4", "audio/mpeg", "audio/amr", "audio/wav"], allowedExtensions: [".ogg", ".m4a", ".mp3", ".amr", ".wav"] },
+  document: { maxSize: 100 * 1024 * 1024, allowedMimeTypes: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "text/plain"], allowedExtensions: [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt"] },
+};
+
 const PUBLIC_ORIGINS = new Set([
   "https://www.swiftgrowthdigital.com",
   "https://swiftgrowthdigital.com",
@@ -227,26 +234,61 @@ async function listContacts(supabase: ReturnType<typeof createClient>, page: num
   return { contacts: data ?? [], total: count ?? 0, page, pageSize };
 }
 
-async function listConversations(supabase: ReturnType<typeof createClient>, page: number, pageSize: number) {
-  const from = page * pageSize;
-  const { data, count, error } = await supabase.from("whatsapp_conversations")
+async function listConversations(supabase: ReturnType<typeof createClient>, page: number, pageSize: number, search?: string, cursor?: string) {
+  let query = supabase.from("whatsapp_conversations")
     .select("*", { count: "exact" })
     .order("last_message_at", { ascending: false })
-    .range(from, from + pageSize - 1);
+    .order("recipient_phone", { ascending: false })
+    .limit(pageSize + 1);
+
+  if (cursor) {
+    const [cursorTime, cursorPhone] = cursor.split("|");
+    if (cursorTime && cursorPhone) {
+      query = query.or(`last_message_at.lt.${cursorTime},and(last_message_at.eq.${cursorTime},recipient_phone.lt.${cursorPhone})`);
+    }
+  }
+
+  if (search && search.trim()) {
+    const term = search.trim();
+    query = query.or(`recipient_phone.ilike.%${term}%,lead_name.ilike.%${term}%,contact_name.ilike.%${term}%,lead_business_type.ilike.%${term}%,lead_city.ilike.%${term}%`);
+  }
+
+  const { data, count, error } = await query;
   if (error) throw new Error("WhatsApp conversations could not be loaded");
-  return { conversations: data ?? [], total: count ?? 0, page, pageSize };
+
+  const conversations = (data ?? []).slice(0, pageSize);
+  const hasMore = (data ?? []).length > pageSize;
+  let nextCursor: string | null = null;
+  if (hasMore && conversations.length > 0) {
+    const last = conversations[conversations.length - 1];
+    nextCursor = `${last.last_message_at}|${last.recipient_phone}`;
+  }
+
+  return { conversations, total: count ?? 0, nextCursor, hasMore };
 }
 
 async function getConversation(supabase: ReturnType<typeof createClient>, phone: string, limit: number, before?: string) {
   const normalizedPhone = typeof phone === "string" ? normalizeRecipient(phone) : null;
   if (!normalizedPhone) throw new Error("Invalid phone number");
-  const { data, error } = await supabase.rpc("get_whatsapp_conversation_messages", {
+
+  const query = supabase.rpc("get_whatsapp_conversation_messages", {
     p_phone: normalizedPhone,
     p_limit: limit,
     p_before: before ?? null,
   });
+
+  const { data, error } = await query;
   if (error) throw new Error("Conversation messages could not be loaded");
-  return { messages: data ?? [] };
+
+  const messages = (data ?? []).reverse();
+  const hasMore = messages.length === limit;
+  let nextCursor: string | null = null;
+  if (hasMore && messages.length > 0) {
+    const oldest = messages[0];
+    nextCursor = `${oldest.created_at}|${oldest.id}`;
+  }
+
+  return { messages, hasMore, nextCursor };
 }
 
 function getMessagePreview(message: Record<string, unknown>): string {
@@ -281,6 +323,7 @@ async function sendReply(
 ) {
   const phone = typeof input.phone === "string" ? input.phone.trim() : "";
   const body = typeof input.body === "string" ? input.body.trim() : "";
+  const replyToMessageId = typeof input.replyToMessageId === "string" ? input.replyToMessageId : undefined;
   if (!phone || !body) throw new Error("Phone and message body are required");
   if (body.length > 4096) throw new Error("Message exceeds maximum length");
 
@@ -315,7 +358,6 @@ async function sendReply(
       windowExpired = true;
     }
   } else {
-    // No inbound messages = window expired (no conversation context)
     windowExpired = true;
   }
 
@@ -339,13 +381,17 @@ async function sendReply(
   const leadId = lead?.id ?? null;
 
   // Insert outbound message record first
-  const requestBody = {
+  const requestBody: Record<string, unknown> = {
     messaging_product: "whatsapp",
     recipient_type: "individual",
     to: normalizedPhone,
     type: "text",
     text: { body: input.body },
   };
+
+  if (replyToMessageId) {
+    requestBody.context = { message_id: replyToMessageId };
+  }
 
   const { data: message, error: insertError } = await supabase.from("whatsapp_messages").insert({
     direction: "outbound",
@@ -430,6 +476,242 @@ async function sendReply(
     metaMessageId, 
     status: "sent",
     windowExpiresAt: latestInboundAt ? new Date(new Date(latestInboundAt).getTime() + windowMs).toISOString() : null
+  };
+}
+
+async function validateMediaFile(file: { name: string; type: string; size: number }, mediaType: string): Promise<{ valid: boolean; error?: string }> {
+  const limits = MEDIA_LIMITS[mediaType];
+  if (!limits) return { valid: false, error: `Unsupported media type: ${mediaType}` };
+
+  const extension = file.name.toLowerCase().substring(file.name.lastIndexOf("."));
+  if (!limits.allowedExtensions.includes(extension)) {
+    return { valid: false, error: `Invalid file extension for ${mediaType}. Allowed: ${limits.allowedExtensions.join(", ")}` };
+  }
+
+  if (!limits.allowedMimeTypes.includes(file.type)) {
+    return { valid: false, error: `Invalid MIME type for ${mediaType}. Allowed: ${limits.allowedMimeTypes.join(", ")}` };
+  }
+
+  if (file.size > limits.maxSize) {
+    return { valid: false, error: `File size exceeds limit for ${mediaType}. Max: ${Math.round(limits.maxSize / 1024 / 1024)} MB` };
+  }
+
+  return { valid: true };
+}
+
+async function uploadMediaToMeta(
+  file: Uint8Array,
+  mimeType: string,
+  filename: string,
+  config: ReturnType<typeof getWhatsAppConfig>,
+): Promise<string> {
+  if (!config.accessToken || !config.phoneNumberId || !config.apiVersion || !/^v\d+\.\d+$/.test(config.apiVersion)) {
+    throw new Error("WhatsApp API configuration is incomplete");
+  }
+
+  const formData = new FormData();
+  const blob = new Blob([file], { type: mimeType });
+  formData.append("file", blob, filename);
+  formData.append("messaging_product", "whatsapp");
+  formData.append("type", mimeType);
+
+  const response = await fetch(`${graphApiBase(config.apiVersion)}/${encodeURIComponent(config.phoneNumberId)}/media`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${config.accessToken}` },
+    body: formData,
+    signal: AbortSignal.timeout(60_000),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    const details = isRecord(errorBody) ? errorDetails(errorBody.error) : { message: "Media upload failed" };
+    throw new Error("Media upload failed: " + (details.message ?? "unknown error"));
+  }
+
+  const body = await response.json();
+  if (!isRecord(body) || typeof body.id !== "string") {
+    throw new Error("Media upload response missing media ID");
+  }
+
+  return body.id;
+}
+
+async function sendMediaMessage(
+  input: Record<string, unknown>,
+  userId: string,
+  config: ReturnType<typeof getWhatsAppConfig>,
+  supabase: ReturnType<typeof createClient>,
+) {
+  const phone = typeof input.phone === "string" ? input.phone.trim() : "";
+  const mediaType = typeof input.mediaType === "string" ? input.mediaType : "";
+  const mediaId = typeof input.mediaId === "string" ? input.mediaId : "";
+  const caption = typeof input.caption === "string" ? input.caption.trim() : "";
+  const filename = typeof input.filename === "string" ? input.filename : "";
+  const mimeType = typeof input.mimeType === "string" ? input.mimeType : "";
+  const replyToMessageId = typeof input.replyToMessageId === "string" ? input.replyToMessageId : undefined;
+
+  if (!phone || !mediaType || !mediaId) throw new Error("Phone, media type, and media ID are required");
+
+  const normalizedPhone = normalizeRecipient(phone);
+  if (!normalizedPhone) throw new Error("Invalid recipient phone number");
+
+  if (!config.accessToken || !config.phoneNumberId || !config.apiVersion || !/^v\d+\.\d+$/.test(config.apiVersion)) {
+    throw new Error("WhatsApp API configuration is incomplete");
+  }
+
+  // Check 24-hour customer service window
+  const { data: latestInbound, error: inboundError } = await supabase.from("whatsapp_messages")
+    .select("created_at, meta_message_id")
+    .eq("recipient_phone", normalizedPhone)
+    .eq("direction", "inbound")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (inboundError) throw new Error("Failed to check conversation window");
+
+  const now = new Date();
+  const windowHours = 24;
+  const windowMs = windowHours * 60 * 60 * 1000;
+  let windowExpired = false;
+  let latestInboundAt: string | null = null;
+
+  if (latestInbound) {
+    latestInboundAt = latestInbound.created_at;
+    const inboundTime = new Date(latestInbound.created_at).getTime();
+    if (now.getTime() - inboundTime > windowMs) {
+      windowExpired = true;
+    }
+  } else {
+    windowExpired = true;
+  }
+
+  if (windowExpired) {
+    throw new Error(
+      "Customer service window has expired. Free-form media replies are not allowed. " +
+      "Use an approved WhatsApp template via the Campaigns tab."
+    );
+  }
+
+  // Find or create lead for this phone
+  const local = normalizedPhone.slice(-10);
+  const candidates = [...new Set([normalizedPhone, local, `+${normalizedPhone}`, `+91${local}`, `91${local}`])];
+  const { data: lead, error: leadError } = await supabase.from("leads")
+    .select("id, name")
+    .in("whatsapp", candidates)
+    .limit(1)
+    .maybeSingle();
+  if (leadError) throw new Error("Lead lookup failed");
+
+  const leadId = lead?.id ?? null;
+
+  let content: Record<string, unknown>;
+  let requestBody: Record<string, unknown>;
+
+  if (mediaType === "image") {
+    content = { image: { id: mediaId, caption, mime_type: mimeType } };
+    requestBody = { messaging_product: "whatsapp", recipient_type: "individual", to: normalizedPhone, type: "image", image: { id: mediaId, caption } };
+  } else if (mediaType === "video") {
+    content = { video: { id: mediaId, caption, mime_type: mimeType } };
+    requestBody = { messaging_product: "whatsapp", recipient_type: "individual", to: normalizedPhone, type: "video", video: { id: mediaId, caption } };
+  } else if (mediaType === "document") {
+    content = { document: { id: mediaId, filename, caption, mime_type: mimeType } };
+    requestBody = { messaging_product: "whatsapp", recipient_type: "individual", to: normalizedPhone, type: "document", document: { id: mediaId, filename, caption } };
+  } else if (mediaType === "audio") {
+    content = { audio: { id: mediaId, mime_type: mimeType } };
+    requestBody = { messaging_product: "whatsapp", recipient_type: "individual", to: normalizedPhone, type: "audio", audio: { id: mediaId } };
+  } else {
+    throw new Error(`Unsupported media type: ${mediaType}`);
+  }
+
+  if (replyToMessageId) {
+    requestBody.context = { message_id: replyToMessageId };
+  }
+
+  // Insert outbound message record first
+  const { data: message, error: insertError } = await supabase.from("whatsapp_messages").insert({
+    direction: "outbound",
+    recipient_phone: normalizedPhone,
+    contact_name: lead?.name ?? null,
+    lead_id: leadId,
+    message_type: mediaType,
+    content,
+    status: "sending",
+    request_metadata: requestBody,
+    meta_timestamp: new Date().toISOString(),
+  }).select("id").single();
+
+  if (insertError || !message) throw new Error("Outbound message could not be recorded");
+
+  // Send via Meta Graph API
+  let apiResponse: Response;
+  let apiBody: unknown;
+  try {
+    apiResponse = await fetch(`${graphApiBase(config.apiVersion)}/${encodeURIComponent(config.phoneNumberId)}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${config.accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+      signal: AbortSignal.timeout(20_000),
+    });
+    try {
+      apiBody = await apiResponse.json();
+    } catch {
+      apiBody = null;
+    }
+  } catch {
+    await supabase.from("whatsapp_messages").update({
+      status: "failed",
+      error_metadata: { reason: "network_error", message: "Network error sending message" },
+    }).eq("id", message.id);
+    throw new Error("Network error sending message");
+  }
+
+  if (!apiResponse.ok) {
+    const details = isRecord(apiBody) ? errorDetails(apiBody.error) : { message: "Meta API rejected the message" };
+    await supabase.from("whatsapp_messages").update({
+      status: "failed",
+      error_metadata: details,
+      response_metadata: { http_status: apiResponse.status },
+    }).eq("id", message.id);
+    throw new Error("Meta API rejected the message: " + (details.message ?? "unknown error"));
+  }
+
+  const messages = isRecord(apiBody) && Array.isArray(apiBody.messages) ? apiBody.messages : [];
+  const metaMessageId = isRecord(messages[0]) && typeof messages[0].id === "string" ? messages[0].id : null;
+  if (!metaMessageId) {
+    await supabase.from("whatsapp_messages").update({
+      status: "failed",
+      error_metadata: { reason: "missing_meta_message_id", message: "Meta response missing message ID" },
+      response_metadata: { http_status: apiResponse.status },
+    }).eq("id", message.id);
+    throw new Error("Meta response missing message ID");
+  }
+
+  const responseMetadata: Record<string, unknown> = { http_status: apiResponse.status };
+  const acceptedContacts = isRecord(apiBody) && Array.isArray(apiBody.contacts) ? apiBody.contacts : null;
+  if (acceptedContacts) responseMetadata.contact_count = acceptedContacts.length;
+  if (isRecord(messages[0]) && typeof messages[0].message_status === "string") {
+    responseMetadata.message_status = messages[0].message_status;
+  }
+
+  const { error: updateError } = await supabase.from("whatsapp_messages").update({
+    meta_message_id: metaMessageId,
+    status: "sent",
+    meta_timestamp: new Date().toISOString(),
+    response_metadata: responseMetadata,
+  }).eq("id", message.id);
+
+  if (updateError) throw new Error("Message sent but state could not be updated");
+
+  if (leadId) {
+    await supabase.from("leads").update({ whatsapp_last_message_at: new Date().toISOString() }).eq("id", leadId);
+  }
+
+  return {
+    messageId: message.id,
+    metaMessageId,
+    status: "sent",
+    windowExpiresAt: latestInboundAt ? new Date(new Date(latestInboundAt).getTime() + windowMs).toISOString() : null,
   };
 }
 
@@ -714,6 +996,389 @@ async function createCampaign(
   return { campaignId: campaign.id, totalRecipients: recipients.length, queued, failed: recipients.length - queued };
 }
 
+async function listWebhookEvents(supabase: ReturnType<typeof createClient>, page: number, pageSize: number, eventType?: string, messageStatus?: string, search?: string) {
+  const from = page * pageSize;
+  let query = supabase.from("whatsapp_webhook_events")
+    .select("id,event_type,meta_message_id,message_status,event_timestamp,metadata,received_at,processed_at", { count: "exact" })
+    .order("received_at", { ascending: false });
+
+  if (eventType) query = query.eq("event_type", eventType);
+  if (messageStatus) query = query.eq("message_status", messageStatus);
+  if (search && search.trim()) {
+    query = query.ilike("meta_message_id", `%${search.trim()}%`);
+  }
+
+  const { data, count, error } = await query.range(from, from + pageSize - 1);
+  if (error) throw new Error("WhatsApp webhook events could not be loaded");
+  return { events: data ?? [], total: count ?? 0, page, pageSize };
+}
+
+// Batch management functions
+async function listBatches(supabase: ReturnType<typeof createClient>, page: number, pageSize: number, search?: string) {
+  const from = page * pageSize;
+  let query = supabase.from("contact_batches")
+    .select("id,name,slug,description,is_active,created_by,created_at,updated_at", { count: "exact" })
+    .order("created_at", { ascending: false });
+
+  if (search && search.trim()) {
+    query = query.or(`name.ilike.%${search.trim()}%,slug.ilike.%${search.trim()}%,description.ilike.%${search.trim()}%`);
+  }
+
+  const { data, count, error } = await query.range(from, from + pageSize - 1);
+  if (error) throw new Error("Contact batches could not be loaded");
+  return { batches: data ?? [], total: count ?? 0, page, pageSize };
+}
+
+async function getBatch(supabase: ReturnType<typeof createClient>, batchId: string) {
+  const { data, error } = await supabase.from("contact_batches")
+    .select("id,name,slug,description,is_active,created_by,created_at,updated_at")
+    .eq("id", batchId)
+    .maybeSingle();
+  if (error) throw new Error("Batch could not be loaded");
+  if (!data) throw new Error("Batch not found");
+  return { batch: data };
+}
+
+async function getBatchStats(supabase: ReturnType<typeof createClient>, batchId: string) {
+  const { data, error } = await supabase.rpc("get_contact_batch_stats", { p_batch_id: batchId });
+  if (error) throw new Error("Batch stats could not be loaded");
+  return { stats: data?.[0] ?? {} };
+}
+
+async function getBatchMembers(supabase: ReturnType<typeof createClient>, batchId: string, page: number, pageSize: number, search?: string) {
+  const from = page * pageSize;
+  let query = supabase.from("contact_batch_members")
+    .select(`
+      lead_id,
+      created_at,
+      leads!inner (
+        id,
+        name,
+        business_type,
+        city,
+        whatsapp,
+        whatsapp_opt_in,
+        whatsapp_opt_in_at,
+        whatsapp_opt_in_source,
+        whatsapp_opt_out,
+        whatsapp_opt_out_at,
+        source,
+        status,
+        created_at
+      )
+    `, { count: "exact" })
+    .eq("batch_id", batchId)
+    .order("created_at", { ascending: false });
+
+  if (search && search.trim()) {
+    const term = search.trim();
+    query = query.or(`leads.name.ilike.%${term}%,leads.whatsapp.ilike.%${term}%,leads.business_type.ilike.%${term}%,leads.city.ilike.%${term}%`);
+  }
+
+  const { data, count, error } = await query.range(from, from + pageSize - 1);
+  if (error) throw new Error("Batch members could not be loaded");
+  const members = (data ?? []).map((row: Record<string, unknown>) => ({
+    lead_id: row.lead_id,
+    added_at: row.created_at,
+    ...row.leads as Record<string, unknown>
+  }));
+  return { members, total: count ?? 0, page, pageSize };
+}
+
+async function createBatch(
+  input: Record<string, unknown>,
+  userId: string,
+  supabase: ReturnType<typeof createClient>,
+) {
+  const name = typeof input.name === "string" ? input.name.trim().slice(0, 120) : "";
+  const slug = typeof input.slug === "string" ? input.slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 80) : "";
+  const description = typeof input.description === "string" ? input.description.trim().slice(0, 500) : "";
+  const isActive = input.isActive === true;
+
+  if (!name || !slug) throw new Error("Batch name and slug are required");
+  if (slug.length < 2) throw new Error("Slug must be at least 2 characters");
+
+  const { data: existing } = await supabase.from("contact_batches").select("id").eq("slug", slug).maybeSingle();
+  if (existing) throw new Error("A batch with this slug already exists");
+
+  const { data, error } = await supabase.from("contact_batches").insert({
+    name,
+    slug,
+    description: description || null,
+    is_active: isActive,
+    created_by: userId,
+  }).select("id,name,slug,description,is_active,created_by,created_at,updated_at").single();
+  if (error) throw new Error("Batch could not be created");
+  return { batch: data };
+}
+
+async function updateBatch(
+  input: Record<string, unknown>,
+  supabase: ReturnType<typeof createClient>,
+) {
+  const batchId = typeof input.batchId === "string" ? input.batchId : "";
+  const name = typeof input.name === "string" ? input.name.trim().slice(0, 120) : "";
+  const slug = typeof input.slug === "string" ? input.slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 80) : "";
+  const description = typeof input.description === "string" ? input.description.trim().slice(0, 500) : "";
+  const isActive = input.isActive === true;
+
+  if (!batchId) throw new Error("Batch ID is required");
+  if (!name || !slug) throw new Error("Batch name and slug are required");
+
+  const { data: existing } = await supabase.from("contact_batches").select("id").eq("slug", slug).neq("id", batchId).maybeSingle();
+  if (existing) throw new Error("A batch with this slug already exists");
+
+  const { data, error } = await supabase.from("contact_batches").update({
+    name,
+    slug,
+    description: description || null,
+    is_active: isActive,
+  }).eq("id", batchId).select("id,name,slug,description,is_active,created_by,created_at,updated_at").single();
+  if (error) throw new Error("Batch could not be updated");
+  if (!data) throw new Error("Batch not found");
+  return { batch: data };
+}
+
+async function deleteBatch(
+  input: Record<string, unknown>,
+  supabase: ReturnType<typeof createClient>,
+) {
+  const batchId = typeof input.batchId === "string" ? input.batchId : "";
+  if (!batchId) throw new Error("Batch ID is required");
+  const { error } = await supabase.from("contact_batches").delete().eq("id", batchId);
+  if (error) throw new Error("Batch could not be deleted");
+  return { deleted: true };
+}
+
+async function addBatchMembers(
+  input: Record<string, unknown>,
+  supabase: ReturnType<typeof createClient>,
+) {
+  const batchId = typeof input.batchId === "string" ? input.batchId : "";
+  const leadIds = Array.isArray(input.leadIds) ? input.leadIds : [];
+  const validIds = leadIds.filter((id) => typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id));
+  if (!batchId || validIds.length === 0) throw new Error("Batch ID and at least one valid lead ID are required");
+  if (validIds.length > 5000) throw new Error("Cannot add more than 5,000 contacts at once");
+
+  // Check batch exists
+  const { data: batch, error: batchError } = await supabase.from("contact_batches").select("id").eq("id", batchId).maybeSingle();
+  if (batchError || !batch) throw new Error("Batch not found");
+
+  // Check leads exist
+  const { data: leads, error: leadsError } = await supabase.from("leads").select("id").in("id", validIds);
+  if (leadsError) throw new Error("Some leads could not be verified");
+  const foundIds = new Set((leads ?? []).map((l) => l.id));
+  const missingIds = validIds.filter((id) => !foundIds.has(id));
+  if (missingIds.length > 0) throw new Error(`${missingIds.length} lead(s) not found`);
+
+  // Insert members (ignore duplicates via PK constraint)
+  const members = validIds.map((leadId) => ({ batch_id: batchId, lead_id: leadId }));
+  const { error } = await supabase.from("contact_batch_members").upsert(members, { onConflict: "batch_id,lead_id", ignoreDuplicates: true });
+  if (error) throw new Error("Batch members could not be added");
+
+  return { added: validIds.length };
+}
+
+async function removeBatchMembers(
+  input: Record<string, unknown>,
+  supabase: ReturnType<typeof createClient>,
+) {
+  const batchId = typeof input.batchId === "string" ? input.batchId : "";
+  const leadIds = Array.isArray(input.leadIds) ? input.leadIds : [];
+  const validIds = leadIds.filter((id) => typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id));
+  if (!batchId || validIds.length === 0) throw new Error("Batch ID and at least one valid lead ID are required");
+
+  const { error } = await supabase.from("contact_batch_members").delete().eq("batch_id", batchId).in("lead_id", validIds);
+  if (error) throw new Error("Batch members could not be removed");
+  return { removed: validIds.length };
+}
+
+async function createCampaignFromBatches(
+  input: Record<string, unknown>,
+  userId: string,
+  supabase: ReturnType<typeof createClient>,
+) {
+  const name = typeof input.name === "string" ? input.name.trim().slice(0, 120) : "";
+  const templateId = typeof input.templateId === "string" ? input.templateId : "";
+  const batchIds = Array.isArray(input.batchIds) ? input.batchIds : [];
+  const validBatchIds = batchIds.filter((id) => typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id));
+  if (!name || !templateId || validBatchIds.length === 0) throw new Error("Campaign name, approved template, and at least one batch are required");
+  if (!validComponents(input.components)) throw new Error("Template components must be valid JSON matching the Meta template component format");
+
+  const { data: template, error: templateError } = await supabase.from("whatsapp_templates")
+    .select("id,name,language,status,waba_id")
+    .eq("id", templateId)
+    .eq("status", "APPROVED")
+    .maybeSingle();
+  if (templateError || !template) throw new Error("Select a template currently approved in Meta WhatsApp Manager");
+
+  // Resolve audience from batches server-side
+  const { data: audience, error: audienceError } = await supabase.rpc("resolve_batch_audience", { p_batch_ids: validBatchIds });
+  if (audienceError) throw new Error("Could not resolve batch audience");
+
+  const uniqueAudience = [...new Map((audience ?? []).map((a: Record<string, unknown>) => [a.lead_id, a])).values()];
+  if (uniqueAudience.length === 0) throw new Error("No eligible contacts found in selected batches");
+
+  const { data: campaign, error: campaignError } = await supabase.from("whatsapp_campaigns").insert({
+    name,
+    template_id: templateId,
+    template_components: input.components ?? [],
+    status: "queued",
+    created_by: userId,
+  }).select("id").single();
+  if (campaignError || !campaign) throw new Error("WhatsApp campaign could not be created");
+
+  const recipients = uniqueAudience.map((contact: Record<string, unknown>) => ({
+    campaign_id: campaign.id,
+    lead_id: contact.lead_id as string,
+    recipient_phone: normalizeRecipient(contact.recipient_phone as string) || (contact.recipient_phone as string),
+    status: "queued",
+  }));
+  for (let offset = 0; offset < recipients.length; offset += 500) {
+    const { error } = await supabase.from("whatsapp_campaign_recipients").insert(recipients.slice(offset, offset + 500));
+    if (error) {
+      await supabase.from("whatsapp_campaigns").delete().eq("id", campaign.id);
+      throw new Error("WhatsApp campaign recipients could not be queued");
+    }
+  }
+  return { campaignId: campaign.id, totalRecipients: recipients.length, queued: recipients.length, failed: 0 };
+}
+
+// Batch assignment rules functions
+async function listBatchRules(supabase: ReturnType<typeof createClient>, batchId: string) {
+  const { data, error } = await supabase.from("contact_batch_rules")
+    .select("id,batch_id,field,operator,value,is_active,created_by,created_at,updated_at")
+    .eq("batch_id", batchId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error("Batch rules could not be loaded");
+  return { rules: data ?? [] };
+}
+
+async function createBatchRule(
+  input: Record<string, unknown>,
+  userId: string,
+  supabase: ReturnType<typeof createClient>,
+) {
+  const batchId = typeof input.batchId === "string" ? input.batchId : "";
+  const field = typeof input.field === "string" ? input.field : "";
+  const operator = typeof input.operator === "string" ? input.operator : "";
+  const value = typeof input.value === "string" ? input.value : "";
+  const isActive = input.isActive === true;
+
+  if (!batchId || !field || !operator) throw new Error("Batch ID, field, and operator are required");
+
+  const allowedFields = ["business_type", "city", "source", "status", "whatsapp_opt_in_source"];
+  if (!allowedFields.includes(field)) throw new Error("Invalid field. Allowed: " + allowedFields.join(", "));
+
+  const allowedOperators = ["equals", "not_equals", "contains", "starts_with", "is_set", "is_not_set"];
+  if (!allowedOperators.includes(operator)) throw new Error("Invalid operator. Allowed: " + allowedOperators.join(", "));
+
+  // For is_set/is_not_set operators, value is not required
+  if (!["is_set", "is_not_set"].includes(operator) && !value) throw new Error("Value is required for this operator");
+
+  const { data: existing } = await supabase.from("contact_batch_rules")
+    .select("id").eq("batch_id", batchId).eq("field", field).eq("operator", operator).eq("value", value).maybeSingle();
+  if (existing) throw new Error("A rule with this field, operator, and value already exists for this batch");
+
+  const { data, error } = await supabase.from("contact_batch_rules").insert({
+    batch_id: batchId,
+    field,
+    operator,
+    value,
+    is_active: isActive,
+    created_by: userId,
+  }).select("id,batch_id,field,operator,value,is_active,created_by,created_at,updated_at").single();
+  if (error) throw new Error("Batch rule could not be created");
+  return { rule: data };
+}
+
+async function updateBatchRule(
+  input: Record<string, unknown>,
+  supabase: ReturnType<typeof createClient>,
+) {
+  const ruleId = typeof input.ruleId === "string" ? input.ruleId : "";
+  const field = typeof input.field === "string" ? input.field : "";
+  const operator = typeof input.operator === "string" ? input.operator : "";
+  const value = typeof input.value === "string" ? input.value : "";
+  const isActive = input.isActive === true;
+
+  if (!ruleId) throw new Error("Rule ID is required");
+
+  const allowedFields = ["business_type", "city", "source", "status", "whatsapp_opt_in_source"];
+  if (field && !allowedFields.includes(field)) throw new Error("Invalid field. Allowed: " + allowedFields.join(", "));
+
+  const allowedOperators = ["equals", "not_equals", "contains", "starts_with", "is_set", "is_not_set"];
+  if (operator && !allowedOperators.includes(operator)) throw new Error("Invalid operator. Allowed: " + allowedOperators.join(", "));
+
+  if (!["is_set", "is_not_set"].includes(operator) && !value) throw new Error("Value is required for this operator");
+
+  const { data, error } = await supabase.from("contact_batch_rules").update({
+    field: field || undefined,
+    operator: operator || undefined,
+    value: value || undefined,
+    is_active: isActive,
+  }).eq("id", ruleId).select("id,batch_id,field,operator,value,is_active,created_by,created_at,updated_at").single();
+  if (error) throw new Error("Batch rule could not be updated");
+  if (!data) throw new Error("Rule not found");
+  return { rule: data };
+}
+
+async function deleteBatchRule(supabase: ReturnType<typeof createClient>, ruleId: string, batchId: string) {
+  const { error } = await supabase.from("contact_batch_rules").delete().eq("id", ruleId).eq("batch_id", batchId);
+  if (error) throw new Error("Batch rule could not be deleted");
+  return { deleted: true };
+}
+
+async function evaluateBatchRulesForContact(supabase: ReturnType<typeof createClient>, leadId: string) {
+  const { data, error } = await supabase.rpc("evaluate_batch_rules_for_contact", { p_lead_id: leadId });
+  if (error) throw new Error("Batch rules evaluation failed");
+  return { assignments: data ?? [] };
+}
+
+async function reEvaluateAllBatchRules(supabase: ReturnType<typeof createClient>) {
+  const { data, error } = await supabase.rpc("re_evaluate_all_batch_rules");
+  if (error) throw new Error("Batch rules re-evaluation failed");
+  return { assignedCount: data ?? 0 };
+}
+
+async function reEvaluateBatchRules(supabase: ReturnType<typeof createClient>, batchId: string) {
+  // Get all members of this batch
+  const { data: members, error: membersError } = await supabase
+    .from("contact_batch_members")
+    .select("lead_id")
+    .eq("batch_id", batchId);
+  if (membersError) throw new Error("Batch members could not be loaded");
+  
+  const leadIds = (members ?? []).map((m) => m.lead_id);
+  let evaluated = 0;
+  let added = 0;
+  let existing = 0;
+  let errors = 0;
+  
+  for (const leadId of leadIds) {
+    try {
+      const { data, error } = await supabase.rpc("evaluate_batch_rules_for_contact", { p_lead_id: leadId });
+      if (error) {
+        errors++;
+        console.error(JSON.stringify({ event: "batch_rule_evaluation_failed", lead_id: leadId, error: error.message }));
+        continue;
+      }
+      evaluated++;
+      const assignments = (data ?? []).length;
+      if (assignments > 0) {
+        added += assignments;
+      } else {
+        existing++;
+      }
+    } catch (e) {
+      errors++;
+      console.error(JSON.stringify({ event: "batch_rule_evaluation_failed", lead_id: leadId, error: e instanceof Error ? e.message : "unknown" }));
+    }
+  }
+  
+  return { evaluated, added, existing, errors };
+}
+
 async function handleAction(
   input: Record<string, unknown>,
   user: { id: string },
@@ -743,6 +1408,47 @@ async function handleAction(
       : { whatsapp_opt_in: false, whatsapp_opt_in_at: null, whatsapp_opt_in_source: null, whatsapp_opt_out: true, whatsapp_opt_out_at: new Date().toISOString() };
     const { error } = await supabase.from("leads").update(update).eq("id", leadId);
     if (error) throw new Error("WhatsApp contact consent could not be updated");
+    
+    // Evaluate batch rules after consent update (may change eligibility)
+    try {
+      await supabase.rpc("evaluate_batch_rules_for_contact", { p_lead_id: leadId });
+    } catch (ruleError) {
+      console.error(JSON.stringify({ event: "batch_rule_evaluation_failed", lead_id: leadId, error: ruleError instanceof Error ? ruleError.message : "unknown" }));
+    }
+    
+    return { updated: true };
+  }
+  if (action === "update_lead") {
+    const leadId = typeof input.leadId === "string" ? input.leadId : "";
+    if (!leadId) throw new Error("Lead ID is required");
+    
+    const allowedFields = ["name", "business_type", "city", "status", "notes", "whatsapp"];
+    const update: Record<string, unknown> = {};
+    for (const field of allowedFields) {
+      if (input[field] !== undefined) {
+        update[field] = typeof input[field] === "string" ? input[field].trim() : input[field];
+      }
+    }
+    if (Object.keys(update).length === 0) throw new Error("No valid fields to update");
+    
+    // Normalize whatsapp if provided
+    if (update.whatsapp) {
+      const normalized = normalizeRecipient(update.whatsapp as string);
+      if (!normalized) throw new Error("Invalid WhatsApp number format");
+      update.whatsapp = `+${normalized}`;
+      update.whatsapp_normalized = normalized;
+    }
+    
+    const { error } = await supabase.from("leads").update(update).eq("id", leadId);
+    if (error) throw new Error("Lead could not be updated");
+    
+    // Evaluate batch rules after manual lead update
+    try {
+      await supabase.rpc("evaluate_batch_rules_for_contact", { p_lead_id: leadId });
+    } catch (ruleError) {
+      console.error(JSON.stringify({ event: "batch_rule_evaluation_failed", lead_id: leadId, error: ruleError instanceof Error ? ruleError.message : "unknown" }));
+    }
+    
     return { updated: true };
   }
   if (action === "create_campaign") return createCampaign(input, user.id, supabase);
@@ -759,16 +1465,19 @@ async function handleAction(
     return { messages: data ?? [] };
   }
   if (action === "list_webhook_events") {
-    const { data, error } = await supabase.from("whatsapp_webhook_events")
-      .select("id,event_type,meta_message_id,message_status,event_timestamp,metadata,received_at,processed_at")
-      .order("received_at", { ascending: false }).limit(200);
-    if (error) throw new Error("WhatsApp webhook events could not be loaded");
-    return { events: data ?? [] };
+    const page = typeof input.page === "number" && Number.isInteger(input.page) ? Math.max(0, Math.min(10_000, input.page)) : 0;
+    const pageSize = typeof input.pageSize === "number" && Number.isInteger(input.pageSize) ? Math.min(Math.max(1, input.pageSize), 100) : 50;
+    const eventType = typeof input.eventType === "string" ? input.eventType : undefined;
+    const messageStatus = typeof input.messageStatus === "string" ? input.messageStatus : undefined;
+    const search = typeof input.search === "string" ? input.search.trim() : undefined;
+    return listWebhookEvents(supabase, page, pageSize, eventType, messageStatus, search);
   }
   if (action === "list_conversations") {
     const page = typeof input.page === "number" && Number.isInteger(input.page) ? Math.max(0, Math.min(10_000, input.page)) : 0;
     const pageSize = typeof input.pageSize === "number" && Number.isInteger(input.pageSize) ? Math.min(Math.max(1, input.pageSize), 100) : 30;
-    return listConversations(supabase, page, pageSize);
+    const search = typeof input.search === "string" ? input.search.trim() : undefined;
+    const cursor = typeof input.cursor === "string" ? input.cursor : undefined;
+    return listConversations(supabase, page, pageSize, search, cursor);
   }
   if (action === "get_conversation") {
     const phone = typeof input.phone === "string" ? input.phone : "";
@@ -780,6 +1489,23 @@ async function handleAction(
     const config = getWhatsAppConfig();
     return sendReply(input, user.id, config, supabase);
   }
+  if (action === "upload_media") {
+    const config = getWhatsAppConfig();
+    const fileBase64 = typeof input.fileBase64 === "string" ? input.fileBase64 : "";
+    const filename = typeof input.filename === "string" ? input.filename : "";
+    const mimeType = typeof input.mimeType === "string" ? input.mimeType : "";
+    const mediaType = typeof input.mediaType === "string" ? input.mediaType : "";
+    if (!fileBase64 || !filename || !mimeType || !mediaType) throw new Error("File data, filename, MIME type, and media type are required");
+    const fileBytes = Uint8Array.from(atob(fileBase64), (c) => c.charCodeAt(0));
+    const validation = await validateMediaFile({ name: filename, type: mimeType, size: fileBytes.length }, mediaType);
+    if (!validation.valid) throw new Error(validation.error ?? "Invalid file");
+    const mediaId = await uploadMediaToMeta(fileBytes, mimeType, filename, config);
+    return { mediaId };
+  }
+  if (action === "send_media") {
+    const config = getWhatsAppConfig();
+    return sendMediaMessage(input, user.id, config, supabase);
+  }
   if (action === "get_media") {
     const config = getWhatsAppConfig();
     return getMedia(input, config, supabase);
@@ -787,6 +1513,203 @@ async function handleAction(
   if (action === "mark_read") {
     const config = getWhatsAppConfig();
     return markRead(input, config, supabase);
+  }
+  // Batch management actions
+  if (action === "list_batches") {
+    const page = typeof input.page === "number" && Number.isInteger(input.page) ? Math.max(0, Math.min(10_000, input.page)) : 0;
+    const pageSize = typeof input.pageSize === "number" && Number.isInteger(input.pageSize) ? Math.min(Math.max(1, input.pageSize), 100) : 30;
+    const search = typeof input.search === "string" ? input.search.trim() : undefined;
+    return listBatches(supabase, page, pageSize, search);
+  }
+  if (action === "get_batch") {
+    const batchId = typeof input.batchId === "string" ? input.batchId : "";
+    if (!batchId) throw new Error("Batch ID is required");
+    return getBatch(supabase, batchId);
+  }
+  if (action === "get_batch_stats") {
+    const batchId = typeof input.batchId === "string" ? input.batchId : "";
+    if (!batchId) throw new Error("Batch ID is required");
+    return getBatchStats(supabase, batchId);
+  }
+  if (action === "get_batch_members") {
+    const batchId = typeof input.batchId === "string" ? input.batchId : "";
+    const page = typeof input.page === "number" && Number.isInteger(input.page) ? Math.max(0, Math.min(10_000, input.page)) : 0;
+    const pageSize = typeof input.pageSize === "number" && Number.isInteger(input.pageSize) ? Math.min(Math.max(1, input.pageSize), 100) : 50;
+    const search = typeof input.search === "string" ? input.search.trim() : undefined;
+    if (!batchId) throw new Error("Batch ID is required");
+    return getBatchMembers(supabase, batchId, page, pageSize, search);
+  }
+  if (action === "create_batch") {
+    return createBatch(input, user.id, supabase);
+  }
+  if (action === "update_batch") {
+    return updateBatch(input, supabase);
+  }
+  if (action === "delete_batch") {
+    return deleteBatch(input, supabase);
+  }
+  if (action === "add_batch_members") {
+    return addBatchMembers(input, supabase);
+  }
+  if (action === "remove_batch_members") {
+    return removeBatchMembers(input, supabase);
+  }
+  if (action === "create_campaign_from_batches") {
+    return createCampaignFromBatches(input, user.id, supabase);
+  }
+  // Batch assignment rules actions
+  if (action === "list_batch_rules") {
+    const batchId = typeof input.batchId === "string" ? input.batchId : "";
+    if (!batchId) throw new Error("Batch ID is required");
+    return listBatchRules(supabase, batchId);
+  }
+  if (action === "create_batch_rule") {
+    return createBatchRule(input, user.id, supabase);
+  }
+  if (action === "update_batch_rule") {
+    return updateBatchRule(input, supabase);
+  }
+  if (action === "delete_batch_rule") {
+    const ruleId = typeof input.ruleId === "string" ? input.ruleId : "";
+    const batchId = typeof input.batchId === "string" ? input.batchId : "";
+    if (!ruleId || !batchId) throw new Error("Rule ID and Batch ID are required");
+    return deleteBatchRule(supabase, ruleId, batchId);
+  }
+  if (action === "evaluate_batch_rules") {
+    const leadId = typeof input.leadId === "string" ? input.leadId : "";
+    if (!leadId) throw new Error("Lead ID is required");
+    return evaluateBatchRulesForContact(supabase, leadId);
+  }
+  if (action === "re_evaluate_all_batch_rules") {
+    return reEvaluateAllBatchRules(supabase);
+  }
+  if (action === "re_evaluate_batch_rules") {
+    const batchId = typeof input.batchId === "string" ? input.batchId : "";
+    if (!batchId) throw new Error("Batch ID is required");
+    return reEvaluateBatchRules(supabase, batchId);
+  }
+  if (action === "update_lead") {
+    const leadId = typeof input.leadId === "string" ? input.leadId : "";
+    if (!leadId) throw new Error("Lead ID is required");
+    
+    const allowedFields = ["name", "business_type", "city", "source", "status", "notes", "whatsapp"];
+    const update: Record<string, unknown> = {};
+    for (const field of allowedFields) {
+      if (input[field] !== undefined) {
+        update[field] = typeof input[field] === "string" ? input[field].trim() : input[field];
+      }
+    }
+    if (Object.keys(update).length === 0) throw new Error("No valid fields to update");
+    
+    // Normalize whatsapp if provided
+    if (update.whatsapp) {
+      const normalized = normalizeRecipient(update.whatsapp as string);
+      if (!normalized) throw new Error("Invalid WhatsApp number format");
+      update.whatsapp = `+${normalized}`;
+      update.whatsapp_normalized = normalized;
+    }
+    
+    const { error } = await supabase.from("leads").update(update).eq("id", leadId);
+    if (error) throw new Error("Lead could not be updated");
+    
+    // Evaluate batch rules after manual lead update
+    try {
+      await supabase.rpc("evaluate_batch_rules_for_contact", { p_lead_id: leadId });
+    } catch (ruleError) {
+      console.error(JSON.stringify({ event: "batch_rule_evaluation_failed", lead_id: leadId, error: ruleError instanceof Error ? ruleError.message : "unknown" }));
+    }
+    
+    return { updated: true };
+  }
+  if (action === "re_evaluate_batch_rules") {
+    const batchId = typeof input.batchId === "string" ? input.batchId : "";
+    if (!batchId) throw new Error("Batch ID is required");
+    return reEvaluateBatchRules(supabase, batchId);
+  }
+  if (action === "get_contact_batch_memberships") {
+    const leadIds = Array.isArray(input.leadIds) ? input.leadIds : [];
+    const validIds = leadIds.filter((id) => typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id));
+    if (validIds.length === 0) return { memberships: {} };
+    
+    const { data, error } = await supabase
+      .from("contact_batch_members")
+      .select(`
+        lead_id,
+        batch_id,
+        membership_source,
+        contact_batches!inner (
+          id,
+          name
+        )
+      `)
+      .in("lead_id", validIds);
+    
+    if (error) throw new Error("Contact batch memberships could not be loaded");
+    
+    const memberships: Record<string, { id: string; name: string; membership_source: "manual" | "rule" }[]> = {};
+    for (const row of (data ?? []) as Record<string, unknown>[]) {
+      const leadId = row.lead_id as string;
+      const batch = row.contact_batches as { id: string; name: string };
+      const membershipSource = row.membership_source as "manual" | "rule";
+      if (!memberships[leadId]) {
+        memberships[leadId] = [];
+      }
+      memberships[leadId].push({
+        id: batch.id,
+        name: batch.name,
+        membership_source: membershipSource,
+      });
+    }
+    
+    return { memberships };
+  }
+  // Media token generation for secure media access
+  if (action === "get_media_token") {
+    const messageId = typeof input.messageId === "string" ? input.messageId : "";
+    if (!messageId) throw new Error("Message ID is required");
+    
+    // Verify the message exists and is inbound
+    const { data: message, error } = await supabase.from("whatsapp_messages")
+      .select("id, direction, message_type, content")
+      .eq("id", messageId)
+      .maybeSingle();
+    if (error || !message) throw new Error("Message not found");
+    if (message.direction !== "inbound") throw new Error("Media tokens only available for inbound messages");
+    
+    const content = message.content as Record<string, unknown> | null;
+    if (!content) throw new Error("Message has no content");
+    
+    const type = typeof message.message_type === "string" ? message.message_type : "";
+    let hasMedia = false;
+    if (type === "image" && isRecord(content.image)) hasMedia = true;
+    else if (type === "video" && isRecord(content.video)) hasMedia = true;
+    else if (type === "document" && isRecord(content.document)) hasMedia = true;
+    else if (type === "audio" && isRecord(content.audio)) hasMedia = true;
+    else if (type === "sticker" && isRecord(content.sticker)) hasMedia = true;
+    
+    if (!hasMedia) throw new Error("Message does not contain media");
+    
+    // Generate short-lived token (1 hour expiry)
+    const secret = Deno.env.get("MEDIA_ACCESS_TOKEN_SECRET") || Deno.env.get("META_APP_SECRET");
+    if (!secret) throw new Error("Media token secret not configured");
+    
+    const timestamp = Date.now();
+    const payload = btoa(JSON.stringify({ messageId, userId: user.id }));
+    const tokenData = `${payload}.${timestamp}`;
+    
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    const signature = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(tokenData)));
+    const signatureHex = [...signature].map((b) => b.toString(16).padStart(2, "0")).join("");
+    
+    const token = `${payload}.${timestamp}.${signatureHex}`;
+    
+    return { token, expiresAt: new Date(timestamp + 60 * 60 * 1000).toISOString() };
   }
   throw new Error("Unsupported WhatsApp management action");
 }

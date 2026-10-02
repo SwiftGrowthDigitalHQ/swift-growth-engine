@@ -5,6 +5,7 @@ import {
   graphApiBase,
   isRecord,
   normalizeRecipient,
+  sha256,
 } from "../_shared/whatsapp.ts";
 
 const MAX_MEDIA_SIZE = 50 * 1024 * 1024; // 50MB
@@ -66,119 +67,228 @@ async function requireAdmin(request: Request) {
   return { user: data.user, supabase: adminClient };
 }
 
+// Verify media access token (HMAC-based short-lived token)
+async function verifyMediaToken(token: string, messageId: string): Promise<boolean> {
+  const secret = Deno.env.get("MEDIA_ACCESS_TOKEN_SECRET") || Deno.env.get("META_APP_SECRET");
+  if (!secret) return false;
+  
+  const parts = token.split(".");
+  if (parts.length !== 3) return false;
+  
+  const [payloadB64, timestampStr, signature] = parts;
+  const timestamp = parseInt(timestampStr, 10);
+  if (isNaN(timestamp)) return false;
+  
+  // Token expires after 1 hour
+  if (Date.now() - timestamp > 60 * 60 * 1000) return false;
+  
+  // Verify HMAC
+  const expectedPayload = `${payloadB64}.${timestampStr}`;
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const expectedSig = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(expectedPayload)));
+  const expectedSigHex = [...expectedSig].map((b) => b.toString(16).padStart(2, "0")).join("");
+  
+  return signature === expectedSigHex;
+}
+
+async function getMessageMediaInfo(supabase: ReturnType<typeof createClient>, messageId: string) {
+  const { data: message, error } = await supabase.from("whatsapp_messages")
+    .select("id, direction, recipient_phone, message_type, content, meta_message_id")
+    .eq("id", messageId)
+    .maybeSingle();
+
+  if (error || !message) return { error: "Message not found", status: 404 };
+  if (message.direction !== "inbound") return { error: "Media can only be retrieved for inbound messages", status: 403 };
+
+  const content = message.content as Record<string, unknown> | null;
+  if (!content) return { error: "Message has no content", status: 400 };
+
+  const type = typeof message.message_type === "string" ? message.message_type : "";
+  
+  let mediaId: string | null = null;
+  let mimeType: string | null = null;
+  let filename: string | null = null;
+  let caption: string | null = null;
+
+  if (type === "image" && isRecord(content.image)) {
+    mediaId = typeof content.image.id === "string" ? content.image.id : null;
+    mimeType = typeof content.image.mime_type === "string" ? content.image.mime_type : "image/jpeg";
+    filename = typeof content.image.caption === "string" && content.image.caption.length > 0
+      ? content.image.caption.slice(0, 100) + ".jpg"
+      : "image.jpg";
+    caption = typeof content.image.caption === "string" ? content.image.caption : null;
+  } else if (type === "video" && isRecord(content.video)) {
+    mediaId = typeof content.video.id === "string" ? content.video.id : null;
+    mimeType = typeof content.video.mime_type === "string" ? content.video.mime_type : "video/mp4";
+    filename = "video.mp4";
+    caption = typeof content.video.caption === "string" ? content.video.caption : null;
+  } else if (type === "document" && isRecord(content.document)) {
+    mediaId = typeof content.document.id === "string" ? content.document.id : null;
+    mimeType = typeof content.document.mime_type === "string" ? content.document.mime_type : "application/octet-stream";
+    filename = typeof content.document.filename === "string" ? content.document.filename : "document";
+    caption = typeof content.document.caption === "string" ? content.document.caption : null;
+  } else if (type === "audio" && isRecord(content.audio)) {
+    mediaId = typeof content.audio.id === "string" ? content.audio.id : null;
+    mimeType = typeof content.audio.mime_type === "string" ? content.audio.mime_type : "audio/ogg";
+    filename = "audio.ogg";
+  } else if (type === "sticker" && isRecord(content.sticker)) {
+    mediaId = typeof content.sticker.id === "string" ? content.sticker.id : null;
+    mimeType = typeof content.sticker.mime_type === "string" ? content.sticker.mime_type : "image/webp";
+    filename = "sticker.webp";
+  } else {
+    return { error: "Message type does not contain downloadable media", status: 400 };
+  }
+
+  if (!mediaId) return { error: "Media ID not found in message", status: 400 };
+
+  return { mediaId, mimeType, filename, caption, type, messageId: message.id };
+}
+
+async function streamMediaFromMeta(
+  mediaId: string,
+  mimeType: string,
+  filename: string,
+  config: ReturnType<typeof getWhatsAppConfig>,
+  origin: string | null,
+  download: boolean = false
+): Promise<Response> {
+  // Get media URL from Meta
+  const mediaUrl = `${graphApiBase(config.apiVersion)}/${encodeURIComponent(mediaId)}`;
+  const mediaResponse = await fetch(mediaUrl, {
+    headers: { Authorization: `Bearer ${config.accessToken}` },
+    signal: AbortSignal.timeout(15_000),
+  });
+
+  if (!mediaResponse.ok) {
+    const errBody = await mediaResponse.json().catch(() => ({}));
+    const details = isRecord(errBody) ? errBody.error : { message: "Failed to get media URL" };
+    return jsonResponse(502, { error: "Failed to get media URL: " + (details?.message ?? "unknown error") }, origin);
+  }
+
+  const mediaData = await mediaResponse.json();
+  const mediaDownloadUrl = isRecord(mediaData) && typeof mediaData.url === "string" ? mediaData.url : null;
+  if (!mediaDownloadUrl) return jsonResponse(502, { error: "Media URL not found in Meta response" }, origin);
+
+  // Download media with size limit
+  const downloadResponse = await fetch(mediaDownloadUrl, {
+    headers: { Authorization: `Bearer ${config.accessToken}` },
+    signal: AbortSignal.timeout(30_000),
+  });
+
+  if (!downloadResponse.ok) return jsonResponse(502, { error: "Failed to download media" }, origin);
+
+  const contentLength = downloadResponse.headers.get("content-length");
+  if (contentLength && parseInt(contentLength, 10) > MAX_MEDIA_SIZE) {
+    return jsonResponse(413, { error: "Media file exceeds size limit" }, origin);
+  }
+
+  const mediaBytes = await downloadResponse.arrayBuffer();
+  if (mediaBytes.byteLength > MAX_MEDIA_SIZE) {
+    return jsonResponse(413, { error: "Media file exceeds size limit" }, origin);
+  }
+
+  const actualMimeType = downloadResponse.headers.get("content-type") ?? mimeType;
+  const disposition = download ? "attachment" : "inline";
+
+  return new Response(new Uint8Array(mediaBytes), {
+    status: 200,
+    headers: {
+      "Content-Type": actualMimeType,
+      "Content-Disposition": `${disposition}; filename="${filename?.replace(/"/g, "") || "media"}"`,
+      "Content-Length": mediaBytes.byteLength.toString(),
+      "Cache-Control": "private, max-age=3600",
+      ...corsHeaders(origin),
+    },
+  });
+}
+
 serve(async (request) => {
   const origin = request.headers.get("origin");
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders(origin) });
   if (request.method !== "GET") return jsonResponse(405, { error: "Method not allowed" }, origin);
   if (origin && !PUBLIC_ORIGINS.has(origin)) return jsonResponse(403, { error: "Origin is not allowed" }, origin);
 
-  try {
-    const { user, supabase } = await requireAdmin(request);
-
-    const url = new URL(request.url);
-    const messageId = url.pathname.split("/").pop();
-    if (!messageId) return jsonResponse(400, { error: "Message ID is required" }, origin);
-
-    const { data: message, error } = await supabase.from("whatsapp_messages")
-      .select("id, direction, recipient_phone, message_type, content, meta_message_id")
-      .eq("id", messageId)
-      .maybeSingle();
-
-    if (error) return jsonResponse(500, { error: "Message not found" }, origin);
-    if (!message) return jsonResponse(404, { error: "Message not found" }, origin);
-    if (message.direction !== "inbound") return jsonResponse(403, { error: "Media can only be retrieved for inbound messages" }, origin);
-
-    const content = message.content as Record<string, unknown> | null;
-    if (!content) return jsonResponse(400, { error: "Message has no content" }, origin);
-
-    let mediaId: string | null = null;
-    let mimeType: string | null = null;
-    let filename: string | null = null;
-
-    const type = typeof message.message_type === "string" ? message.message_type : "";
-    if (type === "image" && isRecord(content.image)) {
-      mediaId = typeof content.image.id === "string" ? content.image.id : null;
-      mimeType = typeof content.image.mime_type === "string" ? content.image.mime_type : "image/jpeg";
-      filename = typeof content.image.caption === "string" && content.image.caption.length > 0
-        ? content.image.caption.slice(0, 100) + ".jpg"
-        : "image.jpg";
-    } else if (type === "video" && isRecord(content.video)) {
-      mediaId = typeof content.video.id === "string" ? content.video.id : null;
-      mimeType = typeof content.video.mime_type === "string" ? content.video.mime_type : "video/mp4";
-      filename = "video.mp4";
-    } else if (type === "document" && isRecord(content.document)) {
-      mediaId = typeof content.document.id === "string" ? content.document.id : null;
-      mimeType = typeof content.document.mime_type === "string" ? content.document.mime_type : "application/octet-stream";
-      filename = typeof content.document.filename === "string" ? content.document.filename : "document";
-    } else if (type === "audio" && isRecord(content.audio)) {
-      mediaId = typeof content.audio.id === "string" ? content.audio.id : null;
-      mimeType = typeof content.audio.mime_type === "string" ? content.audio.mime_type : "audio/ogg";
-      filename = "audio.ogg";
-    } else if (type === "sticker" && isRecord(content.sticker)) {
-      mediaId = typeof content.sticker.id === "string" ? content.sticker.id : null;
-      mimeType = typeof content.sticker.mime_type === "string" ? content.sticker.mime_type : "image/webp";
-      filename = "sticker.webp";
-    } else {
-      return jsonResponse(400, { error: "Message type does not contain downloadable media" }, origin);
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split("/").filter(Boolean);
+  
+  // Handle token-based media access: /api/whatsapp/media/token/<token>
+  if (pathParts.length >= 3 && pathParts[pathParts.length - 2] === "token") {
+    const token = pathParts[pathParts.length - 1];
+    const download = url.searchParams.get("download") === "true";
+    
+    // Parse token: payload.timestamp.signature
+    const parts = token.split(".");
+    if (parts.length !== 3) return jsonResponse(400, { error: "Invalid token format" }, origin);
+    
+    const [payloadB64, timestampStr] = parts;
+    const timestamp = parseInt(timestampStr, 10);
+    if (isNaN(timestamp) || Date.now() - timestamp > 60 * 60 * 1000) {
+      return jsonResponse(401, { error: "Token expired" }, origin);
     }
-
-    if (!mediaId) return jsonResponse(400, { error: "Media ID not found in message" }, origin);
-
+    
+    let payload: { messageId: string; userId: string };
+    try {
+      payload = JSON.parse(atob(payloadB64));
+    } catch {
+      return jsonResponse(400, { error: "Invalid token payload" }, origin);
+    }
+    
+    const valid = await verifyMediaToken(token, payload.messageId);
+    if (!valid) return jsonResponse(401, { error: "Invalid token" }, origin);
+    
+    const credentials = getSupabaseCredentials();
+    if (!credentials.url || !credentials.serviceRoleKey) {
+      return jsonResponse(503, { error: "Service configuration unavailable" }, origin);
+    }
+    const supabase = createClient(credentials.url, credentials.serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    
     const config = getWhatsAppConfig();
     if (!config.accessToken || !config.apiVersion || !/^v\d+\.\d+$/.test(config.apiVersion)) {
       return jsonResponse(503, { error: "WhatsApp API configuration incomplete" }, origin);
     }
-
-    // Get media URL from Meta
-    const mediaUrl = `${graphApiBase(config.apiVersion)}/${encodeURIComponent(mediaId)}`;
-    const mediaResponse = await fetch(mediaUrl, {
-      headers: { Authorization: `Bearer ${config.accessToken}` },
-      signal: AbortSignal.timeout(15_000),
-    });
-
-    if (!mediaResponse.ok) {
-      const errBody = await mediaResponse.json().catch(() => ({}));
-      const details = isRecord(errBody) ? errBody.error : { message: "Failed to get media URL" };
-      return jsonResponse(502, { error: "Failed to get media URL: " + (details?.message ?? "unknown error") }, origin);
+    
+    const mediaInfo = await getMessageMediaInfo(supabase, payload.messageId);
+    if ("error" in mediaInfo) {
+      return jsonResponse(mediaInfo.status, { error: mediaInfo.error }, origin);
     }
-
-    const mediaData = await mediaResponse.json();
-    const mediaDownloadUrl = isRecord(mediaData) && typeof mediaData.url === "string" ? mediaData.url : null;
-    if (!mediaDownloadUrl) return jsonResponse(502, { error: "Media URL not found in Meta response" }, origin);
-
-    // Download media with size limit
-    const downloadResponse = await fetch(mediaDownloadUrl, {
-      headers: { Authorization: `Bearer ${config.accessToken}` },
-      signal: AbortSignal.timeout(30_000),
-    });
-
-    if (!downloadResponse.ok) return jsonResponse(502, { error: "Failed to download media" }, origin);
-
-    const contentLength = downloadResponse.headers.get("content-length");
-    if (contentLength && parseInt(contentLength, 10) > MAX_MEDIA_SIZE) {
-      return jsonResponse(413, { error: "Media file exceeds size limit" }, origin);
-    }
-
-    const mediaBytes = await downloadResponse.arrayBuffer();
-    if (mediaBytes.byteLength > MAX_MEDIA_SIZE) {
-      return jsonResponse(413, { error: "Media file exceeds size limit" }, origin);
-    }
-
-    const actualMimeType = downloadResponse.headers.get("content-type") ?? mimeType;
-
-    return new Response(new Uint8Array(mediaBytes), {
-      status: 200,
-      headers: {
-        "Content-Type": actualMimeType,
-        "Content-Disposition": `inline; filename="${filename?.replace(/"/g, "") || "media"}"`,
-        "Content-Length": mediaBytes.byteLength.toString(),
-        "Cache-Control": "private, max-age=3600",
-        ...corsHeaders(origin),
-      },
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Media request failed";
-    console.error(JSON.stringify({ event: "whatsapp_media_request_failed", error: message }));
-    return jsonResponse(500, { error: "Media request failed" }, origin);
+    
+    return streamMediaFromMeta(mediaInfo.mediaId, mediaInfo.mimeType, mediaInfo.filename, config, origin, download);
   }
-});
+  
+  // Handle legacy admin-authenticated media access: /api/whatsapp/media/<messageId>
+  if (pathParts.length >= 2 && pathParts[pathParts.length - 2] === "media") {
+    const messageId = pathParts[pathParts.length - 1];
+    
+    try {
+      const { user, supabase } = await requireAdmin(request);
+      
+      const config = getWhatsAppConfig();
+      if (!config.accessToken || !config.apiVersion || !/^v\d+\.\d+$/.test(config.apiVersion)) {
+        return jsonResponse(503, { error: "WhatsApp API configuration incomplete" }, origin);
+      }
+      
+      const mediaInfo = await getMessageMediaInfo(supabase, messageId);
+      if ("error" in mediaInfo) {
+        return jsonResponse(mediaInfo.status, { error: mediaInfo.error }, origin);
+      }
+      
+      const download = url.searchParams.get("download") === "true";
+      return streamMediaFromMeta(mediaInfo.mediaId, mediaInfo.mimeType, mediaInfo.filename, config, origin, download);
+    } catch (error) {
+      if (error instanceof Response) return error;
+      const message = error instanceof Error ? error.message : "Media request failed";
+      console.error(JSON.stringify({ event: "whatsapp_media_request_failed", error: message }));
+      return jsonResponse(500, { error: "Media request failed" }, origin);
+    }
+  }
+  
+  return jsonResponse(404, { error: "Not found" }, origin);
+  });
