@@ -10,6 +10,13 @@ import {
 
 const MAX_MEDIA_SIZE = 50 * 1024 * 1024; // 50MB
 
+// Disable JWT verification for this function to allow token-based media access
+// without requiring Supabase Authorization header. The token-based auth is handled
+// by verifyMediaToken() using HMAC-signed short-lived tokens.
+export const config = {
+  verify_jwt: false,
+};
+
 const PUBLIC_ORIGINS = new Set([
   "https://www.swiftgrowthdigital.com",
   "https://swiftgrowthdigital.com",
