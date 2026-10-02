@@ -646,11 +646,13 @@ const insertEmoji = useCallback((emoji: string) => {
   }, [fetchConversations]);
 
   useEffect(() => {
-    if (selectedPhone && messages.length > 0) {
-      const ids = messages.map((m) => m.id);
-      processedMessageIdsRef.current = new Set(ids);
+    messages.forEach((message) => processedMessageIdsRef.current.add(message.id));
+    while (processedMessageIdsRef.current.size > 5000) {
+      const oldestId = processedMessageIdsRef.current.values().next().value;
+      if (!oldestId) break;
+      processedMessageIdsRef.current.delete(oldestId);
     }
-  }, [messages, selectedPhone]);
+  }, [messages]);
 
   useEffect(() => {
     if (selectedPhone) {
@@ -745,123 +747,165 @@ const insertEmoji = useCallback((emoji: string) => {
   }, [toast]);
 
   const handleRealtimeMessage = useCallback((payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => {
-    const { eventType, new: newRecord, old: oldRecord } = payload;
-    const message = newRecord as WhatsAppMessage;
+    const eventType = payload.eventType.toUpperCase();
+    const newRecord = payload.new ?? {};
+    const oldRecord = payload.old ?? {};
 
-    if (eventType === "INSERT") {
-      const messageId = message.id;
-      if (processedMessageIdsRef.current.has(messageId)) return;
-      processedMessageIdsRef.current.add(messageId);
-
-      if (message.direction === "inbound") {
-        setConversations((prev) => {
-          const existing = prev.find((c) => c.recipient_phone === message.recipient_phone);
-          if (existing) {
-            return prev.map((c) =>
-              c.recipient_phone === message.recipient_phone
-                ? {
-                    ...c,
-                    unread_count: (c.unread_count ?? 0) + 1,
-                    last_message_at: message.created_at,
-                    last_message_content: message.content,
-                    last_message_type: message.message_type,
-                    last_message_direction: message.direction,
-                    total_messages: (c.total_messages ?? 0) + 1,
-                    inbound_count: (c.inbound_count ?? 0) + 1,
-                  }
-                : c
-            );
-          }
-          return [
-            {
-              recipient_phone: message.recipient_phone,
-              lead_id: message.lead_id,
-              contact_name: message.contact_name,
-              lead_name: message.lead_name,
-              lead_business_type: message.lead_business_type,
-              lead_city: message.lead_city,
-              total_messages: 1,
-              inbound_count: 1,
-              outbound_count: 0,
-              unread_count: 1,
-              last_message_at: message.created_at,
-              last_inbound_at: message.created_at,
-              last_outbound_at: null,
-              last_message_id: message.id,
-              last_message_content: message.content,
-              last_message_type: message.message_type,
-              last_message_direction: message.direction,
-              last_message_status: message.status,
-            } as WhatsAppConversation,
-            ...prev,
-          ];
-        });
-
-        if (selectedPhone === message.recipient_phone) {
-          if (isNearMessageBottomRef.current) {
-            shouldScrollToMessageBottomRef.current = true;
-            smoothMessageScrollRef.current = true;
-          }
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === messageId)) return prev;
-            return [...prev, message];
-          });
-        }
-      } else if (message.direction === "outbound") {
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.recipient_phone === message.recipient_phone
-              ? {
-                  ...c,
-                  last_message_at: message.created_at,
-                  last_message_content: message.content,
-                  last_message_type: message.message_type,
-                  last_message_direction: message.direction,
-                  total_messages: (c.total_messages ?? 0) + 1,
-                  outbound_count: (c.outbound_count ?? 0) + 1,
-                }
-              : c
-          )
-        );
-
-        if (selectedPhone === message.recipient_phone) {
-          if (isNearMessageBottomRef.current) {
-            shouldScrollToMessageBottomRef.current = true;
-            smoothMessageScrollRef.current = true;
-          }
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === messageId)) return prev;
-            return [...prev, message];
-          });
-        }
-      }
-    } else if (eventType === "UPDATE") {
-      const messageId = message.id;
-      const oldMessage = oldRecord as WhatsAppMessage;
-
-      if (message.direction === "inbound" && oldMessage.status === "received" && message.status === "read") {
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.recipient_phone === message.recipient_phone
-              ? { ...c, unread_count: Math.max(0, (c.unread_count ?? 1) - 1) }
-              : c
-          )
-        );
-      }
-
-      setMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? message : m))
-      );
-
-      if (message.status === "failed" && oldMessage.status !== "failed") {
-        toast({ title: "Message failed", description: message.error_metadata ? JSON.stringify(message.error_metadata) : "Unknown error", variant: "destructive" });
-      }
-    } else if (eventType === "DELETE") {
-      const deletedMessage = oldRecord as WhatsAppMessage;
-      processedMessageIdsRef.current.delete(deletedMessage.id);
-      setMessages((prev) => prev.filter((m) => m.id !== deletedMessage.id));
+    if (eventType === "DELETE") {
+      const deletedMessageId = typeof oldRecord.id === "string" ? oldRecord.id : "";
+      if (!deletedMessageId) return;
+      processedMessageIdsRef.current.delete(deletedMessageId);
+      setMessages((prev) => prev.filter((message) => message.id !== deletedMessageId));
+      return;
     }
-  }, [selectedPhone, toast]);
+
+    if (eventType !== "INSERT" && eventType !== "UPDATE") return;
+
+    const messageId = typeof newRecord.id === "string" ? newRecord.id : "";
+    const recipientPhone = typeof newRecord.recipient_phone === "string" ? newRecord.recipient_phone : "";
+    const direction = newRecord.direction;
+    const createdAt = typeof newRecord.created_at === "string" ? newRecord.created_at : "";
+    if (!messageId || !recipientPhone || !createdAt || (direction !== "inbound" && direction !== "outbound")) {
+      if (import.meta.env.DEV) {
+        console.debug("[WhatsApp Realtime] Ignored incomplete message event", {
+          eventType,
+          messageId: messageId || null,
+          direction: typeof direction === "string" ? direction : null,
+          recipientPhone: recipientPhone || null,
+          selectedConversation: selectedPhone,
+        });
+      }
+      return;
+    }
+
+    const message = newRecord as unknown as WhatsAppMessage;
+    const existingMessage = messages.find((current) => current.id === messageId);
+    const alreadyProcessed = processedMessageIdsRef.current.has(messageId) || Boolean(existingMessage);
+    const isNewInsert = eventType === "INSERT" && !alreadyProcessed;
+    const isSelectedConversation = selectedPhone === recipientPhone;
+    const previousStatus = typeof oldRecord.status === "string" ? oldRecord.status : existingMessage?.status;
+
+    processedMessageIdsRef.current.add(messageId);
+    if (import.meta.env.DEV) {
+      console.debug("[WhatsApp Realtime] Message event", {
+        eventType,
+        messageId,
+        direction,
+        recipientPhone,
+        selectedConversation: selectedPhone,
+        insertedIntoState: isSelectedConversation && !existingMessage,
+        duplicateInsert: eventType === "INSERT" && alreadyProcessed,
+        ignoredAsDuplicate: eventType === "INSERT" && alreadyProcessed && Boolean(existingMessage),
+      });
+    }
+
+    setConversations((current) => {
+      const conversationIndex = current.findIndex((conversation) => conversation.recipient_phone === recipientPhone);
+      const isInbound = direction === "inbound";
+      const readTransition = eventType === "UPDATE" && isInbound && previousStatus === "received" && message.status === "read";
+
+      if (conversationIndex === -1) {
+        const newConversation: WhatsAppConversation = {
+          recipient_phone: recipientPhone,
+          lead_id: message.lead_id,
+          contact_name: message.contact_name,
+          lead_name: message.lead_name ?? message.contact_name,
+          lead_business_type: message.lead_business_type ?? null,
+          lead_city: message.lead_city ?? null,
+          lead_whatsapp: recipientPhone,
+          total_messages: 1,
+          inbound_count: isInbound ? 1 : 0,
+          outbound_count: isInbound ? 0 : 1,
+          unread_count: isInbound && message.status === "received" ? 1 : 0,
+          last_message_at: createdAt,
+          last_inbound_at: isInbound ? createdAt : null,
+          last_outbound_at: isInbound ? null : createdAt,
+          last_message_id: messageId,
+          last_message_content: message.content ?? null,
+          last_message_type: message.message_type ?? null,
+          last_message_direction: direction,
+          last_message_status: message.status ?? null,
+        };
+        return [newConversation, ...current].sort(
+          (a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime(),
+        );
+      }
+
+      const existingConversation = current[conversationIndex];
+      const isLatestMessage = new Date(createdAt).getTime() >= new Date(existingConversation.last_message_at).getTime();
+      const shouldUpdatePreview = isLatestMessage || existingConversation.last_message_id === messageId;
+      const unreadDelta = (isNewInsert && isInbound && message.status === "received" ? 1 : 0) - (readTransition ? 1 : 0);
+      const nextConversation: WhatsAppConversation = {
+        ...existingConversation,
+        total_messages: existingConversation.total_messages + (isNewInsert ? 1 : 0),
+        inbound_count: existingConversation.inbound_count + (isNewInsert && isInbound ? 1 : 0),
+        outbound_count: existingConversation.outbound_count + (isNewInsert && !isInbound ? 1 : 0),
+        unread_count: Math.max(0, existingConversation.unread_count + unreadDelta),
+        last_inbound_at: isInbound && isLatestMessage ? createdAt : existingConversation.last_inbound_at,
+        last_outbound_at: !isInbound && isLatestMessage ? createdAt : existingConversation.last_outbound_at,
+        ...(shouldUpdatePreview ? {
+          last_message_at: createdAt,
+          last_message_id: messageId,
+          last_message_content: message.content ?? existingConversation.last_message_content,
+          last_message_type: message.message_type ?? existingConversation.last_message_type,
+          last_message_direction: direction,
+          last_message_status: message.status ?? existingConversation.last_message_status,
+          contact_name: message.contact_name ?? existingConversation.contact_name,
+          lead_id: message.lead_id ?? existingConversation.lead_id,
+          lead_name: message.lead_name ?? existingConversation.lead_name,
+        } : {}),
+      };
+      const next = [...current];
+      next[conversationIndex] = nextConversation;
+      return next.sort(
+        (a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime(),
+      );
+    });
+
+    if (isSelectedConversation) {
+      if (!existingMessage && isNearMessageBottomRef.current) {
+        shouldScrollToMessageBottomRef.current = true;
+        smoothMessageScrollRef.current = true;
+      }
+      setMessages((current) => {
+        const existingIndex = current.findIndex((candidate) => candidate.id === messageId);
+        const next = [...current];
+        if (existingIndex >= 0) {
+          next[existingIndex] = { ...next[existingIndex], ...message };
+        } else {
+          next.push(message);
+        }
+        return next.sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+        );
+      });
+
+      const mediaTypes = ["image", "video", "document", "audio", "sticker"];
+      if (direction === "inbound" && mediaTypes.includes(message.message_type) && !mediaTokens[messageId]) {
+        void supabase.functions.invoke("whatsapp-service", {
+          body: { action: "get_media_token", messageId },
+        }).then(({ data, error }) => {
+          if (error) throw error;
+          if (data?.token) {
+            setMediaTokens((current) => ({
+              ...current,
+              [messageId]: { token: data.token, expiresAt: data.expiresAt },
+            }));
+          }
+        }).catch(() => {
+          console.warn("Failed to fetch media token for realtime message", messageId);
+        });
+      }
+    }
+
+    if (eventType === "UPDATE" && message.status === "failed" && previousStatus !== "failed") {
+      toast({
+        title: "Message failed",
+        description: message.error_metadata ? JSON.stringify(message.error_metadata) : "Unknown error",
+        variant: "destructive",
+      });
+    }
+  }, [mediaTokens, messages, selectedPhone, toast]);
 
   realtimeHandlerRef.current = handleRealtimeMessage;
 
