@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
   let timeoutId: ReturnType<typeof setTimeout>;
