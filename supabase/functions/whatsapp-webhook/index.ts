@@ -71,38 +71,52 @@ async function findOrCreateLeadId(
     return existingLead.id;
   }
   
-  // No existing lead - create new one using upsert to handle race conditions
-  // The unique index on whatsapp_normalized will prevent duplicates
-  const leadName = profileName && profileName.trim() ? profileName.trim() : null;
+  // No existing lead - insert normally, then handle a concurrent create through
+  // the unique index without relying on ON CONFLICT inference for a partial index.
+  const leadName = profileName && profileName.trim() ? profileName.trim() : "WhatsApp Contact";
   
-  const { data: newLead, error: upsertError } = await supabase
+  const { data: newLead, error: insertError } = await supabase
     .from("leads")
-    .upsert({
+    .insert({
       name: leadName,
-      business_type: null,
-      city: null,
+      business_type: "Not provided",
+      city: "Not provided",
       whatsapp: `+${normalizedPhone}`, // Store with + prefix for display
       whatsapp_normalized: normalizedPhone,
       source: "whatsapp_inbound",
       status: "new",
       whatsapp_opt_in: false,
       whatsapp_opt_out: false,
-    }, {
-      onConflict: "whatsapp_normalized",
-      ignoreDuplicates: false, // We want to get the existing or new row
     })
     .select("id")
     .maybeSingle();
   
-  if (upsertError) {
-    // If upsert failed due to race condition, try to find the lead again
+  if (insertError) {
+    console.error(JSON.stringify({
+      event: "whatsapp_contact_auto_create_failed",
+      code: insertError.code,
+    }));
+
+    if (insertError.code !== "23505") {
+      throw new Error("WhatsApp contact could not be created");
+    }
+
+    // A concurrent request may have created this lead after the initial lookup.
     const { data: retryLead, error: retryError } = await supabase
       .from("leads")
       .select("id")
       .eq("whatsapp_normalized", normalizedPhone)
       .maybeSingle();
     
-    if (retryError || !retryLead) {
+    if (retryError) {
+      console.error(JSON.stringify({
+        event: "whatsapp_contact_retry_lookup_failed",
+        code: retryError.code,
+      }));
+      throw new Error("WhatsApp contact could not be created or found");
+    }
+
+    if (!retryLead) {
       throw new Error("WhatsApp contact could not be created or found");
     }
     return retryLead.id;
@@ -112,7 +126,7 @@ async function findOrCreateLeadId(
     throw new Error("WhatsApp contact creation returned no ID");
   }
   
-  console.info(JSON.stringify({ event: "whatsapp_lead_auto_created", phone: normalizedPhone, lead_id: newLead.id }));
+  console.info(JSON.stringify({ event: "whatsapp_lead_auto_created" }));
   return newLead.id;
 }
 
