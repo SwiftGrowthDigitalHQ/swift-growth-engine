@@ -390,11 +390,13 @@ const MessageBubble = React.memo(function MessageBubble({
   isOutbound,
   onReply,
   onRetry,
+  mediaTokens,
 }: {
   message: WhatsAppMessage;
   isOutbound: boolean;
   onReply?: (message: WhatsAppMessage) => void;
   onRetry?: (message: WhatsAppMessage) => void;
+  mediaTokens: Record<string, { token: string; expiresAt: string }>;
 }) {
   const time = formatTime(message.created_at);
 
@@ -1107,6 +1109,7 @@ const insertEmoji = useCallback((emoji: string) => {
                         isOutbound={msg.direction === "outbound"}
                         onReply={msg.direction === "inbound" ? handleReply : undefined}
                         onRetry={msg.direction === "outbound" && msg.status === "failed" ? retryMessage : undefined}
+                        mediaTokens={mediaTokens}
                       />
                     ))}
                     {loading && <div className="text-center text-muted-foreground text-sm">Loading…</div>}
