@@ -44,9 +44,9 @@ interface WhatsAppTemplate {
 }
 interface WhatsAppContact {
   id: string;
-  name: string;
-  business_type: string;
-  city: string;
+  name: string | null;
+  business_type: string | null;
+  city: string | null;
   whatsapp: string;
   whatsapp_opt_in: boolean;
   whatsapp_opt_in_at: string | null;
@@ -108,9 +108,9 @@ interface BatchStats {
 interface BatchMember {
   lead_id: string;
   added_at: string;
-  name: string;
-  business_type: string;
-  city: string;
+  name: string | null;
+  business_type: string | null;
+  city: string | null;
   whatsapp: string;
   whatsapp_opt_in: boolean;
   whatsapp_opt_in_at: string | null;
@@ -186,6 +186,10 @@ export default function WhatsAppAdmin() {
   const [actionError, setActionError] = useState("");
   const [busy, setBusy] = useState(false);
   const [contactPage, setContactPage] = useState(0);
+  const [editContactId, setEditContactId] = useState<string | null>(null);
+  const [editContactName, setEditContactName] = useState("");
+  const [editContactBusinessType, setEditContactBusinessType] = useState("");
+  const [editContactCity, setEditContactCity] = useState("");
   const [webhookPage, setWebhookPage] = useState(0);
   const [webhookEventType, setWebhookEventType] = useState("");
   const [webhookMessageStatus, setWebhookMessageStatus] = useState("");
@@ -324,6 +328,24 @@ export default function WhatsAppAdmin() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) setLoginError("Sign-in failed. Check your credentials and try again.");
     setLoginBusy(false);
+  };
+
+  const startEditContact = (contact: WhatsAppContact) => {
+    setEditContactId(contact.id);
+    setEditContactName(contact.name ?? "");
+    setEditContactBusinessType(contact.business_type ?? "");
+    setEditContactCity(contact.city ?? "");
+  };
+
+  const saveContact = async () => {
+    if (!editContactId) return;
+    const result = await runAction("update_lead", {
+      leadId: editContactId,
+      name: editContactName,
+      business_type: editContactBusinessType,
+      city: editContactCity,
+    });
+    if (result) setEditContactId(null);
   };
 
   const eligibleTemplates = useMemo(() => (data.templates || []).filter((template) => template.status === "APPROVED"), [data.templates]);
@@ -515,10 +537,10 @@ export default function WhatsAppAdmin() {
 
   const handleReEvaluateBatch = async () => {
     if (!selectedBatchId) return;
-    if (!window.confirm("Re-evaluate all contacts for this batch's rules? This may add new members but will not remove existing rule-based members.")) return;
-    const result = await runAction("re_evaluate_all_batch_rules", { batchId: selectedBatchId });
+    if (!window.confirm("Re-evaluate every contact against this batch's rules? Stale rule-based memberships will be removed; manual memberships are preserved.")) return;
+    const result = await runAction("re_evaluate_batch_rules", { batchId: selectedBatchId });
     if (result) {
-      toast({ title: "Batch re-evaluated", description: `Evaluated: ${result.evaluated}, Added: ${result.added}, Existing: ${result.existing}, Errors: ${result.errors}`, variant: result.errors > 0 ? "destructive" : "default" });
+      toast({ title: "Batch re-evaluated", description: `${result.assignedCount} rule-based membership(s) added. Stale rule memberships were removed.` });
       void load();
     }
   };
@@ -587,7 +609,7 @@ export default function WhatsAppAdmin() {
             return (
               <tr key={contact.id} className="border-t border-border">
                 <td className="p-3">
-                  <div className="font-medium">{contact.name}</div>
+                  <div className="font-medium">{contact.name || "—"}</div>
                   <div className="text-xs text-muted-foreground">{contact.business_type || "—"} · {contact.city || "—"}</div>
                 </td>
                 <td className="p-3">+{contact.whatsapp}</td>
@@ -612,6 +634,10 @@ export default function WhatsAppAdmin() {
                   )}
                 </td>
                 <td className="p-3">
+                  <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" disabled={busy} onClick={() => startEditContact(contact)}>
+                    <Edit className="mr-1 h-4 w-4" /> Edit
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
@@ -627,10 +653,26 @@ export default function WhatsAppAdmin() {
                   >
                     {contact.whatsapp_opt_in && !contact.whatsapp_opt_out ? "Opt out" : "Record opt-in"}
                   </Button>
+                  </div>
                 </td>
               </tr>
             );
           })}</tbody></table></div>
+          <Dialog open={editContactId !== null} onOpenChange={(open) => !open && setEditContactId(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader><DialogTitle>Edit contact</DialogTitle></DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2"><Label htmlFor="contact-name">Name</Label><Input id="contact-name" value={editContactName} onChange={(event) => setEditContactName(event.target.value)} /></div>
+                <div className="space-y-2"><Label htmlFor="contact-business-type">Business type</Label><Input id="contact-business-type" value={editContactBusinessType} onChange={(event) => setEditContactBusinessType(event.target.value)} /></div>
+                <div className="space-y-2"><Label htmlFor="contact-city">City</Label><Input id="contact-city" value={editContactCity} onChange={(event) => setEditContactCity(event.target.value)} /></div>
+                <p className="text-xs text-muted-foreground">Leave an optional field blank to keep it empty.</p>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditContactId(null)} disabled={busy}>Cancel</Button>
+                <Button onClick={() => void saveContact()} disabled={busy}>Save contact</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           {!contacts.length && <p className="py-8 text-center text-sm text-muted-foreground">No contacts found.</p>}
           <div className="mt-4 flex items-center justify-between"><span className="text-sm text-muted-foreground">{contactResult.total} contacts · page {contactPage + 1}</span><div className="flex gap-2"><Button variant="outline" size="sm" disabled={contactPage === 0 || loading} onClick={() => setContactPage((page) => page - 1)}>Previous</Button><Button variant="outline" size="sm" disabled={(contactPage + 1) * contactResult.pageSize >= contactResult.total || loading} onClick={() => setContactPage((page) => page + 1)}>Next</Button></div></div>
         </section>}

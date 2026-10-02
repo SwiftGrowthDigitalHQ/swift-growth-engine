@@ -11,7 +11,7 @@
 6. **Approved Message Templates** in WhatsApp Manager
 
 ### Supabase Project
-- Project ID: `yhfcziouwodhjvukgjhr`
+- Project ID: `oyrpeyjogtpbtbdvcjgs`
 - Database with migrations applied
 - Edge Functions deployed
 - Secrets configured
@@ -82,7 +82,7 @@ openssl rand -hex 32
 
 ```bash
 # Link to Supabase project
-supabase link --project-ref yhfcziouwodhjvukgjhr
+supabase link --project-ref oyrpeyjogtpbtbdvcjgs
 
 # Push migrations
 supabase db push
@@ -131,7 +131,7 @@ Only public variables:
   "rewrites": [
     {
       "source": "/api/webhooks/whatsapp",
-      "destination": "https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-webhook"
+      "destination": "https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-webhook"
     }
   ]
 }
@@ -164,7 +164,7 @@ select cron.schedule(
   '* * * * *',
   $$
     select net.http_post(
-      url := 'https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-campaign-worker',
+      url := 'https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-campaign-worker',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
         'apikey',
@@ -236,7 +236,7 @@ where email = 'your-admin@email.com';
 ### 9.3 Trigger Worker
 - Wait for cron job (up to 1 minute) or manually trigger:
 ```bash
-curl -X POST "https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-campaign-worker" \
+curl -X POST "https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-campaign-worker" \
   -H "Content-Type: application/json" \
   -H "apikey: YOUR_PUBLISHABLE_KEY" \
   -H "x-whatsapp-worker-secret: YOUR_WORKER_SECRET" \

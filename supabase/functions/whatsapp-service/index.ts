@@ -9,12 +9,13 @@ import {
 } from "../_shared/whatsapp.ts";
 
 const MAX_MEDIA_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_UPLOAD_FILE_SIZE = 16 * 1024 * 1024; // Keep base64 uploads within the Edge Function memory budget.
 
 const MEDIA_LIMITS: Record<string, { maxSize: number; allowedMimeTypes: string[]; allowedExtensions: string[] }> = {
   image: { maxSize: 5 * 1024 * 1024, allowedMimeTypes: ["image/jpeg", "image/png"], allowedExtensions: [".jpg", ".jpeg", ".png"] },
   video: { maxSize: 16 * 1024 * 1024, allowedMimeTypes: ["video/mp4", "video/3gpp", "video/quicktime"], allowedExtensions: [".mp4", ".3gp", ".mov"] },
   audio: { maxSize: 16 * 1024 * 1024, allowedMimeTypes: ["audio/ogg", "audio/mp4", "audio/mpeg", "audio/amr", "audio/wav"], allowedExtensions: [".ogg", ".m4a", ".mp3", ".amr", ".wav"] },
-  document: { maxSize: 100 * 1024 * 1024, allowedMimeTypes: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "text/plain"], allowedExtensions: [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt"] },
+  document: { maxSize: MAX_UPLOAD_FILE_SIZE, allowedMimeTypes: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "text/plain"], allowedExtensions: [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt"] },
 };
 
 const PUBLIC_ORIGINS = new Set([
@@ -24,6 +25,33 @@ const PUBLIC_ORIGINS = new Set([
   "http://127.0.0.1:5173",
 ]);
 const MAX_REQUEST_BYTES = 64_000;
+const MAX_UPLOAD_REQUEST_BYTES = Math.ceil(MAX_UPLOAD_FILE_SIZE / 3) * 4 + MAX_REQUEST_BYTES;
+
+async function readRequestBody(request: Request, maxBytes: number): Promise<Uint8Array | null> {
+  if (!request.body) return new Uint8Array();
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    totalBytes += value.byteLength;
+    if (totalBytes > maxBytes) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+
+  const body = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
 
 function isPublicWebhookUrl(value?: string): boolean {
   if (!value) return false;
@@ -1342,41 +1370,9 @@ async function reEvaluateAllBatchRules(supabase: ReturnType<typeof createClient>
 }
 
 async function reEvaluateBatchRules(supabase: ReturnType<typeof createClient>, batchId: string) {
-  // Get all members of this batch
-  const { data: members, error: membersError } = await supabase
-    .from("contact_batch_members")
-    .select("lead_id")
-    .eq("batch_id", batchId);
-  if (membersError) throw new Error("Batch members could not be loaded");
-  
-  const leadIds = (members ?? []).map((m) => m.lead_id);
-  let evaluated = 0;
-  let added = 0;
-  let existing = 0;
-  let errors = 0;
-  
-  for (const leadId of leadIds) {
-    try {
-      const { data, error } = await supabase.rpc("evaluate_batch_rules_for_contact", { p_lead_id: leadId });
-      if (error) {
-        errors++;
-        console.error(JSON.stringify({ event: "batch_rule_evaluation_failed", lead_id: leadId, error: error.message }));
-        continue;
-      }
-      evaluated++;
-      const assignments = (data ?? []).length;
-      if (assignments > 0) {
-        added += assignments;
-      } else {
-        existing++;
-      }
-    } catch (e) {
-      errors++;
-      console.error(JSON.stringify({ event: "batch_rule_evaluation_failed", lead_id: leadId, error: e instanceof Error ? e.message : "unknown" }));
-    }
-  }
-  
-  return { evaluated, added, existing, errors };
+  const { data, error } = await supabase.rpc("re_evaluate_batch_rules_for_batch", { p_batch_id: batchId });
+  if (error) throw new Error("Batch rules re-evaluation failed");
+  return { assignedCount: data ?? 0 };
 }
 
 async function handleAction(
@@ -1409,12 +1405,8 @@ async function handleAction(
     const { error } = await supabase.from("leads").update(update).eq("id", leadId);
     if (error) throw new Error("WhatsApp contact consent could not be updated");
     
-    // Evaluate batch rules after consent update (may change eligibility)
-    try {
-      await supabase.rpc("evaluate_batch_rules_for_contact", { p_lead_id: leadId });
-    } catch (ruleError) {
-      console.error(JSON.stringify({ event: "batch_rule_evaluation_failed", lead_id: leadId, error: ruleError instanceof Error ? ruleError.message : "unknown" }));
-    }
+    // Rule evaluation errors must be visible to the admin instead of returning a false success.
+    await evaluateBatchRulesForContact(supabase, leadId);
     
     return { updated: true };
   }
@@ -1422,11 +1414,16 @@ async function handleAction(
     const leadId = typeof input.leadId === "string" ? input.leadId : "";
     if (!leadId) throw new Error("Lead ID is required");
     
-    const allowedFields = ["name", "business_type", "city", "status", "notes", "whatsapp"];
+    const allowedFields = ["name", "business_type", "city", "source", "status", "notes", "whatsapp"];
     const update: Record<string, unknown> = {};
     for (const field of allowedFields) {
       if (input[field] !== undefined) {
-        update[field] = typeof input[field] === "string" ? input[field].trim() : input[field];
+        if (typeof input[field] === "string") {
+          const value = input[field].trim();
+          update[field] = ["name", "business_type", "city"].includes(field) && value === "" ? null : value;
+        } else {
+          update[field] = input[field];
+        }
       }
     }
     if (Object.keys(update).length === 0) throw new Error("No valid fields to update");
@@ -1442,12 +1439,8 @@ async function handleAction(
     const { error } = await supabase.from("leads").update(update).eq("id", leadId);
     if (error) throw new Error("Lead could not be updated");
     
-    // Evaluate batch rules after manual lead update
-    try {
-      await supabase.rpc("evaluate_batch_rules_for_contact", { p_lead_id: leadId });
-    } catch (ruleError) {
-      console.error(JSON.stringify({ event: "batch_rule_evaluation_failed", lead_id: leadId, error: ruleError instanceof Error ? ruleError.message : "unknown" }));
-    }
+    // Rule evaluation errors must be visible to the admin instead of returning a false success.
+    await evaluateBatchRulesForContact(supabase, leadId);
     
     return { updated: true };
   }
@@ -1588,44 +1581,6 @@ async function handleAction(
     if (!batchId) throw new Error("Batch ID is required");
     return reEvaluateBatchRules(supabase, batchId);
   }
-  if (action === "update_lead") {
-    const leadId = typeof input.leadId === "string" ? input.leadId : "";
-    if (!leadId) throw new Error("Lead ID is required");
-    
-    const allowedFields = ["name", "business_type", "city", "source", "status", "notes", "whatsapp"];
-    const update: Record<string, unknown> = {};
-    for (const field of allowedFields) {
-      if (input[field] !== undefined) {
-        update[field] = typeof input[field] === "string" ? input[field].trim() : input[field];
-      }
-    }
-    if (Object.keys(update).length === 0) throw new Error("No valid fields to update");
-    
-    // Normalize whatsapp if provided
-    if (update.whatsapp) {
-      const normalized = normalizeRecipient(update.whatsapp as string);
-      if (!normalized) throw new Error("Invalid WhatsApp number format");
-      update.whatsapp = `+${normalized}`;
-      update.whatsapp_normalized = normalized;
-    }
-    
-    const { error } = await supabase.from("leads").update(update).eq("id", leadId);
-    if (error) throw new Error("Lead could not be updated");
-    
-    // Evaluate batch rules after manual lead update
-    try {
-      await supabase.rpc("evaluate_batch_rules_for_contact", { p_lead_id: leadId });
-    } catch (ruleError) {
-      console.error(JSON.stringify({ event: "batch_rule_evaluation_failed", lead_id: leadId, error: ruleError instanceof Error ? ruleError.message : "unknown" }));
-    }
-    
-    return { updated: true };
-  }
-  if (action === "re_evaluate_batch_rules") {
-    const batchId = typeof input.batchId === "string" ? input.batchId : "";
-    if (!batchId) throw new Error("Batch ID is required");
-    return reEvaluateBatchRules(supabase, batchId);
-  }
   if (action === "get_contact_batch_memberships") {
     const leadIds = Array.isArray(input.leadIds) ? input.leadIds : [];
     const validIds = leadIds.filter((id) => typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id));
@@ -1719,15 +1674,17 @@ serve(async (request) => {
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders(origin) });
   if (request.method !== "POST") return jsonResponse(405, { error: "Method not allowed" }, origin);
   if (origin && !PUBLIC_ORIGINS.has(origin)) return jsonResponse(403, { error: "Origin is not allowed" }, origin);
-  const length = Number(request.headers.get("content-length") || "0");
-  if (length > MAX_REQUEST_BYTES) return jsonResponse(413, { error: "Request payload is too large" }, origin);
-
   try {
-    const rawBody = await request.arrayBuffer();
-    if (rawBody.byteLength > MAX_REQUEST_BYTES) return jsonResponse(413, { error: "Request payload is too large" }, origin);
+    const { user, supabase } = await requireAdmin(request);
+    const length = Number(request.headers.get("content-length") || "0");
+    if (length > MAX_UPLOAD_REQUEST_BYTES) return jsonResponse(413, { error: "Request payload is too large" }, origin);
+    const rawBody = await readRequestBody(request, MAX_UPLOAD_REQUEST_BYTES);
+    if (!rawBody) return jsonResponse(413, { error: "Request payload is too large" }, origin);
     const input: unknown = JSON.parse(new TextDecoder().decode(rawBody));
     if (!isRecord(input)) return jsonResponse(400, { error: "Invalid request" }, origin);
-    const { user, supabase } = await requireAdmin(request);
+    if (input.action !== "upload_media" && rawBody.byteLength > MAX_REQUEST_BYTES) {
+      return jsonResponse(413, { error: "Request payload is too large" }, origin);
+    }
     const result = await handleAction(input, user, supabase);
     if (result instanceof Response) return result;
     return jsonResponse(200, { success: true, ...result }, origin);
@@ -1735,7 +1692,7 @@ serve(async (request) => {
     if (error instanceof Response) return jsonResponse(error.status, { error: await error.text() }, origin);
     const message = error instanceof Error ? error.message : "WhatsApp request failed";
     console.error(JSON.stringify({ event: "whatsapp_admin_action_failed", action: "request", error: message }));
-    const status = /configuration is incomplete|Choose a campaign|Select a template|components must be valid|Every campaign recipient|evidence source|recipient number/i.test(message) ? 400 : 500;
+    const status = /configuration is incomplete|Choose a campaign|Select a template|components must be valid|Every campaign recipient|evidence source|recipient number|window has expired|file size exceeds limit|invalid file extension|invalid MIME type|unsupported media type|file data, MIME type/i.test(message) ? 400 : 500;
     return jsonResponse(status, { error: status === 400 ? message : "WhatsApp operation could not be completed" }, origin);
   }
 });

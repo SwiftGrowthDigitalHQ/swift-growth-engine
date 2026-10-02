@@ -25,7 +25,7 @@ select cron.schedule(
   '* * * * *',
   $$
     select net.http_post(
-      url := 'https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-campaign-worker',
+      url := 'https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-campaign-worker',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
         'apikey',
@@ -73,7 +73,7 @@ Create `/src/app/api/cron/whatsapp-worker/route.ts`:
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const workerUrl = "https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-campaign-worker";
+  const workerUrl = "https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-campaign-worker";
   const workerSecret = process.env.WHATSAPP_WORKER_SECRET;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -114,7 +114,7 @@ jobs:
     steps:
       - name: Trigger WhatsApp Campaign Worker
         run: |
-          curl -X POST "https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-campaign-worker" \
+          curl -X POST "https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-campaign-worker" \
             -H "Content-Type: application/json" \
             -H "apikey: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}" \
             -H "x-whatsapp-worker-secret: ${{ secrets.WHATSAPP_WORKER_SECRET }}" \

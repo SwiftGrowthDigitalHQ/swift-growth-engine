@@ -16,11 +16,11 @@ export type Database = {
     Tables: {
       leads: {
         Row: {
-          business_type: string
-          city: string
+          business_type: string | null
+          city: string | null
           created_at: string
           id: string
-          name: string
+          name: string | null
           notes: string | null
           source: string | null
           status: string | null
@@ -34,11 +34,11 @@ export type Database = {
           whatsapp_last_message_at: string | null
         }
         Insert: {
-          business_type: string
-          city: string
+          business_type?: string | null
+          city?: string | null
           created_at?: string
           id?: string
-          name: string
+          name?: string | null
           notes?: string | null
           source?: string | null
           status?: string | null
@@ -52,11 +52,11 @@ export type Database = {
           whatsapp_last_message_at?: string | null
         }
         Update: {
-          business_type?: string
-          city?: string
+          business_type?: string | null
+          city?: string | null
           created_at?: string
           id?: string
-          name?: string
+          name?: string | null
           notes?: string | null
           source?: string | null
           status?: string | null

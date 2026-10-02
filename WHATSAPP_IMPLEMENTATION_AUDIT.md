@@ -2,7 +2,7 @@
 
 ## Project Overview
 - Repository: `swift-growth-engine`
-- Supabase Project: `yhfcziouwodhjvukgjhr`
+- Supabase Project: `oyrpeyjogtpbtbdvcjgs`
 - Production URL: `https://www.swiftgrowthdigital.com`
 - WhatsApp Admin Route: `/admin/whatsapp`
 
@@ -140,7 +140,7 @@ Tabs:
 - Validates eligibility (opt-in, no opt-out, source, timestamp)
 
 ### 4. Webhook Architecture
-**Vercel Rewrite:** `/api/webhooks/whatsapp` → `https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-webhook`
+**Vercel Rewrite:** `/api/webhooks/whatsapp` → `https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-webhook`
 
 Meta Dashboard should use: `https://www.swiftgrowthdigital.com/api/webhooks/whatsapp`
 
@@ -273,7 +273,7 @@ Meta → GET/POST https://www.swiftgrowthdigital.com/api/webhooks/whatsapp
 ## Worker Scheduler Architecture Summary
 ```
 pg_cron (every minute) → net.http_post → 
-  https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-campaign-worker
+  https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-campaign-worker
   Headers: apikey (publishable key), x-whatsapp-worker-secret
   → Worker claims recipients → Sends via Meta API → Updates DB
 ```

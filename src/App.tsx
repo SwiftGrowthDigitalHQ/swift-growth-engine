@@ -44,7 +44,7 @@ function SupabaseConfigurationRequired() {
         <p className="mt-4 leading-7 text-muted-foreground">
           Supabase sign-in and admin data are unavailable because these settings are missing or invalid: <code className="rounded bg-muted px-1.5 py-0.5">{supabaseConfigurationIssues.join(", ")}</code>. Add them to an ignored <code className="rounded bg-muted px-1.5 py-0.5">.env.local</code> file, then restart the Vite server.
         </p>
-        <pre className="mt-4 overflow-x-auto rounded-lg border border-border bg-background p-4 text-sm text-foreground"><code>VITE_SUPABASE_URL=https://yhfcziouwodhjvukgjhr.supabase.co{"\n"}VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key</code></pre>
+        <pre className="mt-4 overflow-x-auto rounded-lg border border-border bg-background p-4 text-sm text-foreground"><code>VITE_SUPABASE_URL=https://oyrpeyjogtpbtbdvcjgs.supabase.co{"\n"}VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key</code></pre>
         <p className="mt-4 text-sm leading-6 text-muted-foreground">
           Use the project's public publishable or anon key here. Never put a Supabase service-role key or Meta access token in frontend configuration.
         </p>

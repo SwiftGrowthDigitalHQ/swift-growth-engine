@@ -73,7 +73,7 @@ async function findOrCreateLeadId(
   
   // No existing lead - create new one using upsert to handle race conditions
   // The unique index on whatsapp_normalized will prevent duplicates
-  const leadName = profileName && profileName.trim() ? profileName.trim() : "WhatsApp Contact";
+  const leadName = profileName && profileName.trim() ? profileName.trim() : null;
   
   const { data: newLead, error: upsertError } = await supabase
     .from("leads")
@@ -188,7 +188,8 @@ async function processIncomingMessage(
   
   // Evaluate batch assignment rules for this contact
   try {
-    await supabase.rpc("evaluate_batch_rules_for_contact", { p_lead_id: leadId });
+    const { error } = await supabase.rpc("evaluate_batch_rules_for_contact", { p_lead_id: leadId });
+    if (error) throw error;
   } catch (ruleError) {
     // Log but don't fail the webhook if rule evaluation fails
     console.error(JSON.stringify({ event: "batch_rule_evaluation_failed", lead_id: leadId, error: ruleError instanceof Error ? ruleError.message : "unknown" }));

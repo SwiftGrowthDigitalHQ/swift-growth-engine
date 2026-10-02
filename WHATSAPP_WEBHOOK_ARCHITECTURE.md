@@ -16,7 +16,7 @@ This document describes the webhook architecture for receiving Meta WhatsApp Clo
                                             ┌──────────────────────────┐
                                             │  Supabase Edge Function  │
                                             │  whatsapp-webhook        │
-                                            │  (yhfcziouwodhjvukgjhr.  │
+                                            │  (oyrpeyjogtpbtbdvcjgs.  │
                                             │   supabase.co/functions/ │
                                             │   v1/whatsapp-webhook)   │
                                             └───────────┬──────────────┘
@@ -48,7 +48,7 @@ https://www.swiftgrowthdigital.com/api/webhooks/whatsapp
 
 ### Actual Edge Function Endpoint
 ```
-https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-webhook
+https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-webhook
 ```
 
 ### Vercel Rewrite Rule (`vercel.json`)
@@ -57,7 +57,7 @@ https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-webhook
   "rewrites": [
     {
       "source": "/api/webhooks/whatsapp",
-      "destination": "https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-webhook"
+      "destination": "https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-webhook"
     }
   ]
 }
@@ -182,7 +182,7 @@ apply_whatsapp_message_status(
 ngrok http 54321
 
 # Or test against deployed function
-curl -X GET "https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-webhook?hub.mode=subscribe&hub.verify_token=YOUR_TOKEN&hub.challenge=test123"
+curl -X GET "https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-webhook?hub.mode=subscribe&hub.verify_token=YOUR_TOKEN&hub.challenge=test123"
 ```
 
 ### Health Check Probe

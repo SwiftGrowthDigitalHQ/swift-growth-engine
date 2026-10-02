@@ -464,6 +464,7 @@ export function WhatsAppInbox() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const conversationListRef = useRef<HTMLDivElement>(null);
   const realtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const realtimeHandlerRef = useRef<(payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => void>(() => {});
   const processedMessageIdsRef = useRef<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
@@ -616,12 +617,6 @@ const insertEmoji = useCallback((emoji: string) => {
 
   useEffect(() => {
     fetchConversations();
-    // Initialize processed message IDs with current messages to avoid duplicates
-    if (selectedPhone) {
-      fetchMessages(selectedPhone).then(() => {
-        // This will be called after messages are loaded
-      });
-    }
   }, [fetchConversations]);
 
   useEffect(() => {
@@ -671,7 +666,7 @@ const insertEmoji = useCallback((emoji: string) => {
           table: "whatsapp_messages",
         },
         (payload) => {
-          handleRealtimeMessage(payload);
+          realtimeHandlerRef.current(payload);
         }
       )
       .subscribe((status) => {
@@ -814,6 +809,8 @@ const insertEmoji = useCallback((emoji: string) => {
     }
   }, [selectedPhone, toast]);
 
+  realtimeHandlerRef.current = handleRealtimeMessage;
+
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -882,7 +879,7 @@ const insertEmoji = useCallback((emoji: string) => {
     } finally {
       setUploadProgress(null);
     }
-  }, [selectedPhone, mediaPreview, replyingToMessage, fetchMessages, toast]);
+  }, [selectedPhone, mediaPreview, replyingToMessage, fetchMessages, toast, uploadProgress]);
 
   const sendReply = useCallback(async () => {
     if (!selectedPhone || (!replyText.trim() && !mediaPreview) || sending) return;

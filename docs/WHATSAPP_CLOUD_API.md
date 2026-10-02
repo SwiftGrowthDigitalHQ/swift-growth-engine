@@ -5,7 +5,7 @@
 This integration uses Meta's WhatsApp Cloud API from Supabase Edge Functions. Browser code only uses the customer-facing Click-to-Chat link; it never receives a Meta token.
 
 - Meta message API: `POST https://graph.facebook.com/{WHATSAPP_API_VERSION}/{WHATSAPP_PHONE_NUMBER_ID}/messages`
-- Webhook function: `https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-webhook`
+- Webhook function: `https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-webhook`
 - Public callback after the Vercel rewrite is deployed: `https://www.swiftgrowthdigital.com/api/webhooks/whatsapp`
 - Admin dashboard: `https://www.swiftgrowthdigital.com/admin/whatsapp`
 
@@ -46,7 +46,7 @@ Supabase supplies `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to deployed Edg
 
 ## 3. Deploy the database and functions
 
-From the project root, after linking the Supabase CLI to project `yhfcziouwodhjvukgjhr` and configuring the secrets:
+From the project root, after linking the Supabase CLI to project `oyrpeyjogtpbtbdvcjgs` and configuring the secrets:
 
 ```sh
 supabase db push
@@ -87,7 +87,7 @@ select cron.schedule(
   '* * * * *',
   $$
     select net.http_post(
-      url := 'https://yhfcziouwodhjvukgjhr.supabase.co/functions/v1/whatsapp-campaign-worker',
+      url := 'https://oyrpeyjogtpbtbdvcjgs.supabase.co/functions/v1/whatsapp-campaign-worker',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
         'apikey',

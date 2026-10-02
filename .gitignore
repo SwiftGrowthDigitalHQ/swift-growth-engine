@@ -31,3 +31,5 @@ supabase/functions/.env.*
 !.env.example
 supabase/functions/.env
 supabase/functions/.env.*
+.vercel
+.env*
