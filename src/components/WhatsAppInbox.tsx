@@ -190,7 +190,7 @@ function getMediaUrl(messageId: string, token?: string, download = false): strin
   return `${baseUrl}/${token}?${params.toString()}`;
 }
 
-function renderMessageContent(message: WhatsAppMessage) {
+function renderMessageContent(message: WhatsAppMessage, mediaTokens: Record<string, { token: string; expiresAt: string }>) {
   const type = message.message_type;
   const content = message.content as MediaContent | null;
   const token = mediaTokens[message.id]?.token;
@@ -403,7 +403,7 @@ const MessageBubble = React.memo(function MessageBubble({
       <div className={`relative max-w-[70%] ${isOutbound ? "rounded-tr-none" : "rounded-tl-none"} rounded-2xl px-4 py-2 ${
         isOutbound ? "bg-primary text-primary-foreground" : "bg-muted"
       } group`}>
-        <div className="text-sm">{renderMessageContent(message)}</div>
+        <div className="text-sm">{renderMessageContent(message, mediaTokens)}</div>
         <div className={`flex items-center gap-1 mt-1 text-[10px] ${isOutbound ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
           <span>{time}</span>
           {isOutbound && getStatusIcon(message.status)}
