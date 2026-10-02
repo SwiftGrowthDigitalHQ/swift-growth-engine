@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
   let timeoutId: ReturnType<typeof setTimeout>;
@@ -15,7 +15,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -198,7 +197,7 @@ function renderMessageContent(message: WhatsAppMessage, mediaTokens: Record<stri
   const downloadUrl = token ? getMediaUrl(message.id, token, true) : `/api/whatsapp/media/${message.id}?download=true`;
 
   if (type === "text" && content?.text) {
-    return <div className="whitespace-pre-wrap text-sm">{content.text.body}</div>;
+    return <div className="whitespace-pre-wrap break-words text-sm">{content.text.body}</div>;
   }
 
   if (type === "image" && content?.image) {
@@ -402,7 +401,7 @@ const MessageBubble = React.memo(function MessageBubble({
 
   return (
     <div className={`flex ${isOutbound ? "justify-end" : "justify-start"}`}>
-      <div className={`relative max-w-[70%] ${isOutbound ? "rounded-tr-none" : "rounded-tl-none"} rounded-2xl px-4 py-2 ${
+      <div className={`relative min-w-0 max-w-[70%] ${isOutbound ? "rounded-tr-none" : "rounded-tl-none"} rounded-2xl px-4 py-2 ${
         isOutbound ? "bg-primary text-primary-foreground" : "bg-muted"
       } group`}>
         <div className="text-sm">{renderMessageContent(message, mediaTokens)}</div>
@@ -461,7 +460,13 @@ export function WhatsAppInbox() {
   const [mediaTokens, setMediaTokens] = useState<Record<string, { token: string; expiresAt: string }>>({});
   const isMobile = useMediaQuery("(max-width: 1023px)");
   const [showConversationList, setShowConversationList] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageViewportRef = useRef<HTMLDivElement>(null);
+  const isNearMessageBottomRef = useRef(true);
+  const shouldScrollToMessageBottomRef = useRef(false);
+  const smoothMessageScrollRef = useRef(false);
+  const pendingMessagePrependRef = useRef<{ scrollTop: number; scrollHeight: number } | null>(null);
+  const loadingMoreConversationsRef = useRef(false);
+  const loadingMoreMessagesRef = useRef(false);
   const conversationListRef = useRef<HTMLDivElement>(null);
   const realtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const realtimeHandlerRef = useRef<(payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => void>(() => {});
@@ -523,8 +528,15 @@ const insertEmoji = useCallback((emoji: string) => {
       if (error) throw new Error(error.message ?? "Failed to load messages");
       const newMessages = ((data?.messages as WhatsAppMessage[] | undefined) ?? []).reverse();
       if (append) {
+        const viewport = messageViewportRef.current;
+        pendingMessagePrependRef.current = viewport
+          ? { scrollTop: viewport.scrollTop, scrollHeight: viewport.scrollHeight }
+          : null;
         setMessages((prev) => [...newMessages, ...prev]);
       } else {
+        pendingMessagePrependRef.current = null;
+        shouldScrollToMessageBottomRef.current = true;
+        smoothMessageScrollRef.current = false;
         setMessages(newMessages);
       }
 
@@ -604,16 +616,30 @@ const insertEmoji = useCallback((emoji: string) => {
   }, [selectedPhone]);
 
   const loadMoreConversations = useCallback(() => {
-    if (!loading && hasMoreConversations && conversationCursor) {
-      fetchConversations(conversationCursor, true);
-    }
-  }, [loading, hasMoreConversations, conversationCursor, fetchConversations]);
+    if (loadingMoreConversationsRef.current || !hasMoreConversations || !conversationCursor) return;
+    loadingMoreConversationsRef.current = true;
+    void fetchConversations(conversationCursor, true).finally(() => {
+      loadingMoreConversationsRef.current = false;
+    });
+  }, [hasMoreConversations, conversationCursor, fetchConversations]);
 
   const loadMoreMessages = useCallback(() => {
-    if (!loading && hasMoreMessages && selectedPhone && messageCursor) {
-      fetchMessages(selectedPhone, messageCursor, true);
+    if (loadingMoreMessagesRef.current || !hasMoreMessages || !selectedPhone || !messageCursor) return;
+    loadingMoreMessagesRef.current = true;
+    void fetchMessages(selectedPhone, messageCursor, true).finally(() => {
+      loadingMoreMessagesRef.current = false;
+    });
+  }, [hasMoreMessages, selectedPhone, messageCursor, fetchMessages]);
+
+  const handleMessageViewportScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
+    const viewport = event.currentTarget;
+    const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+    isNearMessageBottomRef.current = distanceFromBottom <= 96;
+
+    if (viewport.scrollTop <= 80) {
+      loadMoreMessages();
     }
-  }, [loading, hasMoreMessages, selectedPhone, messageCursor, fetchMessages]);
+  }, [loadMoreMessages]);
 
   useEffect(() => {
     fetchConversations();
@@ -637,8 +663,28 @@ const insertEmoji = useCallback((emoji: string) => {
     }
   }, [selectedPhone, fetchMessages, markAsRead]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  useLayoutEffect(() => {
+    const viewport = messageViewportRef.current;
+    if (!viewport) return;
+
+    const prependAnchor = pendingMessagePrependRef.current;
+    if (prependAnchor) {
+      viewport.scrollTop = prependAnchor.scrollTop + viewport.scrollHeight - prependAnchor.scrollHeight;
+      pendingMessagePrependRef.current = null;
+      const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+      isNearMessageBottomRef.current = distanceFromBottom <= 96;
+      return;
+    }
+
+    if (shouldScrollToMessageBottomRef.current) {
+      viewport.scrollTo({
+        top: viewport.scrollHeight,
+        behavior: smoothMessageScrollRef.current ? "smooth" : "auto",
+      });
+      shouldScrollToMessageBottomRef.current = false;
+      smoothMessageScrollRef.current = false;
+      isNearMessageBottomRef.current = true;
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -752,6 +798,10 @@ const insertEmoji = useCallback((emoji: string) => {
         });
 
         if (selectedPhone === message.recipient_phone) {
+          if (isNearMessageBottomRef.current) {
+            shouldScrollToMessageBottomRef.current = true;
+            smoothMessageScrollRef.current = true;
+          }
           setMessages((prev) => {
             if (prev.some((m) => m.id === messageId)) return prev;
             return [...prev, message];
@@ -775,6 +825,10 @@ const insertEmoji = useCallback((emoji: string) => {
         );
 
         if (selectedPhone === message.recipient_phone) {
+          if (isNearMessageBottomRef.current) {
+            shouldScrollToMessageBottomRef.current = true;
+            smoothMessageScrollRef.current = true;
+          }
           setMessages((prev) => {
             if (prev.some((m) => m.id === messageId)) return prev;
             return [...prev, message];
@@ -986,16 +1040,15 @@ const insertEmoji = useCallback((emoji: string) => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-200px)] min-h-[500px] overflow-hidden">
+    <div className="flex h-full min-h-0 min-w-0 w-full overflow-hidden">
       {/* Conversation List */}
       {(showConversationList || !isMobile) && (
         <div
-          ref={conversationListRef}
-          className={`w-full lg:w-96 border-r border-border bg-card flex flex-col overflow-hidden transition-transform duration-300 ${
+          className={`w-full shrink-0 lg:w-96 min-h-0 border-r border-border bg-card flex flex-col overflow-hidden transition-transform duration-300 ${
             isMobile && !showConversationList ? "fixed inset-0 z-50 lg:static" : ""
           }`}
         >
-          <div className="p-3 border-b border-border flex flex-col gap-2">
+          <div className="shrink-0 p-3 border-b border-border flex flex-col gap-2">
             <div className="flex items-center justify-between">
               {isMobile && !showConversationList && (
                 <Button variant="ghost" size="icon" onClick={handleBackToList} className="h-10 w-10">
@@ -1016,11 +1069,12 @@ const insertEmoji = useCallback((emoji: string) => {
               />
             </div>
           </div>
-          <ScrollArea className="flex-1">
-            <div
-              className="p-2 space-y-1"
-              onScroll={loadMoreConversations}
-            >
+          <div
+            ref={conversationListRef}
+            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y"
+            style={{ scrollbarWidth: "thin", scrollbarColor: "hsl(var(--border)) transparent" }}
+          >
+            <div className="p-2 space-y-1">
               {conversations.length === 0 && !loading ? (
                 <div className="p-8 text-center text-muted-foreground text-sm">
                   No conversations yet
@@ -1045,15 +1099,15 @@ const insertEmoji = useCallback((emoji: string) => {
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
         </div>
       )}
 
       {/* Conversation Detail */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       {selectedPhone ? (
-          <div>
-            <div className="p-3 border-b border-border bg-card flex items-center gap-3">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="shrink-0 p-3 border-b border-border bg-card flex items-center gap-3">
               {isMobile && (
                 <Button variant="ghost" size="icon" onClick={handleBackToList} className="h-10 w-10 lg:hidden">
                   <ChevronLeft className="w-5 h-5" />
@@ -1085,8 +1139,13 @@ const insertEmoji = useCallback((emoji: string) => {
               </div>
             </div>
 
-            <ScrollArea className="flex-1">
-              <div className="p-4 space-y-4" onScroll={loadMoreMessages}>
+            <div
+              ref={messageViewportRef}
+              onScroll={handleMessageViewportScroll}
+              className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y"
+              style={{ scrollbarWidth: "thin", scrollbarColor: "hsl(var(--border)) transparent" }}
+            >
+              <div className="min-w-0 p-4 space-y-4">
                 {messages.length === 0 && !loading ? (
                   <div className="text-center text-muted-foreground py-8">No messages in this conversation</div>
                 ) : (
@@ -1110,14 +1169,13 @@ const insertEmoji = useCallback((emoji: string) => {
                       />
                     ))}
                     {loading && <div className="text-center text-muted-foreground text-sm">Loading…</div>}
-                    <div ref={messagesEndRef} />
                   </>
                 )}
               </div>
-            </ScrollArea>
+            </div>
 
             {/* Composer */}
-            <div className="border-t border-border bg-card p-3 relative">
+            <div className="relative shrink-0 border-t border-border bg-card p-3">
               {windowExpired && (
                 <div className="mb-2 p-2 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
                   <AlertCircle className="w-4 h-4 inline mr-1" />
@@ -1226,7 +1284,7 @@ const insertEmoji = useCallback((emoji: string) => {
                   onKeyDown={handleKeyDown}
                   placeholder={windowExpired ? "Window expired — use a template from Campaigns tab" : mediaPreview ? "Add a caption…" : "Type a message…"}
                   rows={1}
-                  className="flex-1 min-h-[44px] max-h-32 resize-none"
+                  className="min-w-0 flex-1 min-h-[44px] max-h-32 resize-none"
                   disabled={sending || !selectedPhone || windowExpired}
                 />
                 <Button
@@ -1270,7 +1328,7 @@ const insertEmoji = useCallback((emoji: string) => {
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-card">
+          <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden bg-card">
             <div className="text-center text-muted-foreground">
               <MessageCircleMore className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
               <p className="text-lg">Select a conversation</p>

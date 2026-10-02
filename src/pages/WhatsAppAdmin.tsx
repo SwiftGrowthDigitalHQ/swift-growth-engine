@@ -572,25 +572,25 @@ export default function WhatsAppAdmin() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-card">
+    <main className={tab === "messages" ? "flex h-[100dvh] flex-col overflow-hidden bg-background text-foreground" : "min-h-screen bg-background text-foreground"}>
+      <header className="shrink-0 border-b border-border bg-card">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 md:px-8">
           <div className="flex items-center gap-3"><div className="rounded-xl bg-whatsapp p-2.5 text-white"><MessageCircle className="h-5 w-5" /></div><div><p className="text-xs uppercase tracking-wider text-muted-foreground">SwiftGrowthDigital</p><h1 className="text-xl font-bold">WhatsApp Management</h1></div></div>
           <div className="flex items-center gap-3"><span className="hidden text-sm text-muted-foreground sm:inline">{session.user.email}</span><Button variant="outline" size="sm" onClick={() => void supabase.auth.signOut()}><LogOut className="mr-2 h-4 w-4" /> Sign out</Button></div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
-        <nav className="mb-6 flex gap-2 overflow-x-auto border-b border-border pb-3" aria-label="WhatsApp administration">
+      <div className={`mx-auto max-w-7xl px-4 py-6 md:px-8 ${tab === "messages" ? "flex min-h-0 w-full flex-1 flex-col overflow-hidden" : ""}`}>
+        <nav className="mb-6 flex shrink-0 gap-2 overflow-x-auto border-b border-border pb-3" aria-label="WhatsApp administration">
           {tabs.map(({ id, label, icon: Icon }) => <Button key={id} variant={tab === id ? "default" : "ghost"} size="sm" onClick={() => setTab(id)}><Icon className="mr-2 h-4 w-4" />{label}</Button>)}
         </nav>
 
-        <div className="mb-5 flex items-center justify-between gap-3">
+        <div className="mb-5 flex shrink-0 items-center justify-between gap-3">
           <div><h2 className="text-2xl font-semibold">{tabs.find((item) => item.id === tab)?.label}</h2><p className="mt-1 text-sm text-muted-foreground">Live data from Supabase and Meta WhatsApp Cloud API.</p></div>
           <Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh</Button>
         </div>
 
-        {actionError && <div role="status" className="mb-5 rounded-lg border border-border bg-card px-4 py-3 text-sm">{actionError}</div>}
+        {actionError && <div role="status" className={`mb-5 rounded-lg border border-border bg-card px-4 py-3 text-sm ${tab === "messages" ? "shrink-0" : ""}`}>{actionError}</div>}
 
         {tab === "overview" && <Overview health={data.health} campaigns={data.campaigns || []} />}
 
@@ -804,7 +804,7 @@ export default function WhatsAppAdmin() {
           <CampaignTable campaigns={data.campaigns || []} />
         </div>}
 
-        {tab === "messages" && <WhatsAppInbox />}
+        {tab === "messages" && <div className="min-h-0 min-w-0 flex-1 overflow-hidden"><WhatsAppInbox /></div>}
 
         {tab === "webhook" && <section className="rounded-xl border border-border bg-card p-5">
         <h3 className="mb-1 font-semibold">Webhook event history</h3>
