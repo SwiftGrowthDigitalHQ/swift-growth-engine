@@ -500,11 +500,14 @@ const insertEmoji = useCallback((emoji: string) => {
   const fetchMessages = useCallback(async (phone: string, cursor?: string, append = false) => {
     if (!phone) return;
     try {
+      setLoading(true);
       const { data, error } = await supabase.functions.invoke("whatsapp-service", {
         body: { action: "get_conversation", phone, limit: 50, before: cursor },
       });
+      console.log("[WhatsApp] fetch_messages response:", { phone, hasError: !!error, dataKeys: data ? Object.keys(data) : null, messagesCount: data?.messages?.length ?? 0 });
       if (error) throw new Error(error.message ?? "Failed to load messages");
       const newMessages = ((data?.messages as WhatsAppMessage[] | undefined) ?? []).reverse();
+      console.log("[WhatsApp] messages after reverse:", newMessages.length, newMessages.map(m => ({ id: m.id, type: m.message_type, created_at: m.created_at })));
       if (append) {
         const viewport = messageViewportRef.current;
         pendingMessagePrependRef.current = viewport
@@ -728,6 +731,8 @@ const insertEmoji = useCallback((emoji: string) => {
     const eventType = payload.eventType.toUpperCase();
     const newRecord = payload.new ?? {};
     const oldRecord = payload.old ?? {};
+
+    console.log("[WhatsApp Realtime] Received event:", { eventType, hasNew: !!newRecord, hasOld: !!oldRecord });
 
     if (eventType === "DELETE") {
       const deletedMessageId = typeof oldRecord.id === "string" ? oldRecord.id : "";
@@ -1060,6 +1065,14 @@ const insertEmoji = useCallback((emoji: string) => {
     setSelectedPhone(null);
     setShowConversationList(true);
   };
+
+  // Auto-select first conversation when conversations load
+  useEffect(() => {
+    if (conversations.length > 0 && !selectedPhone) {
+      const firstConversation = conversations[0];
+      handleConversationClick(firstConversation.recipient_phone);
+    }
+  }, [conversations]);
 
   return (
     <div className="flex h-full min-h-0 min-w-0 w-full overflow-hidden">
