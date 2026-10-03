@@ -238,7 +238,9 @@ interface ChatMediaAudioProps {
 export function ChatMediaAudio({ src, downloadUrl }: ChatMediaAudioProps) {
   return (
     <div className="space-y-2">
-      <audio src={src} controls className="w-80 max-w-full display-block" />
+      <div className="w-80 max-w-full bg-muted rounded-lg p-4 border border-border flex-shrink-0">
+        <audio src={src} controls className="w-full" />
+      </div>
       <a
         href={downloadUrl}
         target="_blank"
@@ -259,7 +261,9 @@ interface ChatMediaStickerProps {
 export function ChatMediaSticker({ src, downloadUrl }: ChatMediaStickerProps) {
   return (
     <div className="space-y-2">
-      <img src={src} alt="Sticker" className="w-40 h-40 max-w-full display-block" />
+      <div className="w-80 h-80 max-w-full rounded-lg overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center border border-border">
+        <img src={src} alt="Sticker" className="w-full h-full object-cover display-block" />
+      </div>
       <a
         href={downloadUrl}
         target="_blank"

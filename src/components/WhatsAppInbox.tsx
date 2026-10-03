@@ -568,6 +568,8 @@ const insertEmoji = useCallback((emoji: string) => {
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load messages");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -1054,6 +1056,7 @@ const insertEmoji = useCallback((emoji: string) => {
 
   const handleConversationClick = (phone: string) => {
     setSelectedPhone(phone);
+    setMessages([]); // Clear old messages immediately
     setMessageCursor(null);
     setHasMoreMessages(true);
     if (isMobile) {
