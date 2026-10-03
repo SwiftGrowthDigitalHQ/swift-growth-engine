@@ -396,13 +396,10 @@ async function sendReply(
     );
   }
 
-  // Find or create lead for this phone
-  const local = normalizedPhone.slice(-10);
-  const candidates = [...new Set([normalizedPhone, local, `+${normalizedPhone}`, `+91${local}`, `91${local}`])];
+  // Find or create lead for this phone using whatsapp_normalized for consistency with webhook
   const { data: lead, error: leadError } = await supabase.from("leads")
     .select("id, name")
-    .in("whatsapp", candidates)
-    .limit(1)
+    .eq("whatsapp_normalized", normalizedPhone)
     .maybeSingle();
   if (leadError) throw new Error("Lead lookup failed");
 
@@ -621,13 +618,10 @@ async function sendMediaMessage(
     );
   }
 
-  // Find or create lead for this phone
-  const local = normalizedPhone.slice(-10);
-  const candidates = [...new Set([normalizedPhone, local, `+${normalizedPhone}`, `+91${local}`, `91${local}`])];
+  // Find or create lead for this phone using whatsapp_normalized for consistency with webhook
   const { data: lead, error: leadError } = await supabase.from("leads")
     .select("id, name")
-    .in("whatsapp", candidates)
-    .limit(1)
+    .eq("whatsapp_normalized", normalizedPhone)
     .maybeSingle();
   if (leadError) throw new Error("Lead lookup failed");
 

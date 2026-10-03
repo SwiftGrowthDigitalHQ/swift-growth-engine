@@ -449,6 +449,7 @@ export function WhatsAppInbox() {
   const realtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const realtimeHandlerRef = useRef<(payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => void>(() => {});
   const processedMessageIdsRef = useRef<Set<string>>(new Set());
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -687,8 +688,9 @@ const insertEmoji = useCallback((emoji: string) => {
   useEffect(() => {
     if (!supabase) return;
 
-    const channel = supabase
-      .channel("whatsapp_inbox_realtime")
+    // Subscribe to global channel for conversation list updates
+    const globalChannel = supabase
+      .channel("whatsapp_global_realtime")
       .on(
         "postgres_changes",
         {
@@ -703,31 +705,125 @@ const insertEmoji = useCallback((emoji: string) => {
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           setIsRealtimeConnected(true);
-          console.log("[Realtime] Subscribed to whatsapp_messages");
+          console.log("[Realtime] Subscribed to global whatsapp_messages");
         } else if (status === "CHANNEL_ERROR") {
           setIsRealtimeConnected(false);
-          console.error("[Realtime] Channel error");
+          console.error("[Realtime] Global channel error");
           toast({ title: "Realtime disconnected", description: "Live updates paused. Refresh to reconnect.", variant: "destructive" });
         } else if (status === "TIMED_OUT") {
           setIsRealtimeConnected(false);
-          console.warn("[Realtime] Connection timed out");
+          console.warn("[Realtime] Global connection timed out");
           toast({ title: "Realtime timeout", description: "Reconnecting…", variant: "default" });
         } else if (status === "CLOSED") {
           setIsRealtimeConnected(false);
-          console.log("[Realtime] Connection closed");
+          console.log("[Realtime] Global connection closed");
         }
       });
 
-    realtimeChannelRef.current = channel;
+    // Subscribe to conversation-specific channel for message updates
+    let conversationChannel: ReturnType<typeof supabase.channel> | null = null;
+    const setupConversationChannel = (phone: string) => {
+      if (conversationChannel) {
+        supabase.removeChannel(conversationChannel);
+      }
+      conversationChannel = supabase
+        .channel(`whatsapp_conversation_${phone}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "whatsapp_messages",
+            filter: `recipient_phone=eq.${phone}`,
+          },
+          (payload) => {
+            realtimeHandlerRef.current(payload);
+          }
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            console.log("[Realtime] Subscribed to conversation", phone);
+          } else if (status === "CHANNEL_ERROR") {
+            console.error("[Realtime] Conversation channel error for", phone);
+          } else if (status === "CLOSED") {
+            console.log("[Realtime] Conversation channel closed for", phone);
+          }
+        });
+    };
+
+    realtimeChannelRef.current = globalChannel;
+
+    // Set up conversation channel when selectedPhone changes
+    if (selectedPhone) {
+      setupConversationChannel(selectedPhone);
+    }
 
     return () => {
       if (realtimeChannelRef.current) {
         supabase.removeChannel(realtimeChannelRef.current);
         realtimeChannelRef.current = null;
       }
+      if (conversationChannel) {
+        supabase.removeChannel(conversationChannel);
+        conversationChannel = null;
+      }
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
       setIsRealtimeConnected(false);
     };
-  }, [toast]);
+  }, [selectedPhone, toast]);
+
+  // Fallback polling for messages when realtime might miss events
+  const startMessagePolling = useCallback(() => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+    if (!selectedPhone) return;
+    
+    pollingIntervalRef.current = setInterval(async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("whatsapp-service", {
+          body: { action: "get_conversation", phone: selectedPhone, limit: 50 },
+        });
+        if (error) throw new Error(error.message ?? "Polling failed");
+        const fetchedMessages = ((data?.messages as WhatsAppMessage[] | undefined) ?? []).reverse();
+        
+        // Check for new messages not in current state
+        setMessages((current) => {
+          const currentIds = new Set(current.map(m => m.id));
+          const newMessages = fetchedMessages.filter(m => !currentIds.has(m.id));
+          if (newMessages.length > 0) {
+            console.log("[Polling] Found", newMessages.length, "new messages");
+            return [...current, ...newMessages].sort(
+              (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            );
+          }
+          return current;
+        });
+      } catch (e) {
+        console.warn("[Polling] Error fetching messages:", e);
+      }
+    }, 5000); // Poll every 5 seconds
+  }, [selectedPhone]);
+
+  const stopMessagePolling = useCallback(() => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+  }, []);
+
+  // Start/stop polling when conversation changes
+  useEffect(() => {
+    if (selectedPhone) {
+      startMessagePolling();
+    } else {
+      stopMessagePolling();
+    }
+    return stopMessagePolling;
+  }, [selectedPhone, startMessagePolling, stopMessagePolling]);
 
   const handleRealtimeMessage = useCallback((payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => {
     const eventType = payload.eventType.toUpperCase();

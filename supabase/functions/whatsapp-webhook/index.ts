@@ -154,8 +154,12 @@ async function processIncomingMessage(
   if (typeof message.id !== "string" || typeof message.from !== "string" || typeof message.type !== "string") {
     return { recorded: false, duplicate: false };
   }
-  const phone = normalizeRecipient(message.from);
-  if (!phone) return { recorded: false, duplicate: false };
+  const rawFrom = message.from;
+  const phone = normalizeRecipient(rawFrom);
+  if (!phone) {
+    console.warn(JSON.stringify({ event: "normalize_failed", raw_from: rawFrom }));
+    return { recorded: false, duplicate: false };
+  }
 
   const occurredAt = toIsoFromUnixSeconds(message.timestamp);
   const key = `incoming:${message.id}`;
@@ -165,7 +169,7 @@ async function processIncomingMessage(
     meta_message_id: message.id,
     message_status: "received",
     event_timestamp: occurredAt,
-    metadata: { ...commonMetadata, direction: "inbound", message_type: message.type },
+    metadata: { ...commonMetadata, direction: "inbound", message_type: message.type, raw_from: rawFrom, normalized_phone: phone },
   });
   const { id: _id, from: _from, timestamp: _timestamp, type: _type, ...content } = message;
   const contactName = contactNames.get(message.from) || null;
