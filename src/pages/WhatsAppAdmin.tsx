@@ -574,13 +574,13 @@ export default function WhatsAppAdmin() {
   return (
     <main className={tab === "messages" ? "flex h-[100dvh] flex-col overflow-hidden bg-background text-foreground" : "min-h-screen bg-background text-foreground"}>
       <header className="shrink-0 border-b border-border bg-card">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 md:px-8">
+        <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-4 md:px-8 w-full">
           <div className="flex items-center gap-3"><div className="rounded-xl bg-whatsapp p-2.5 text-white"><MessageCircle className="h-5 w-5" /></div><div><p className="text-xs uppercase tracking-wider text-muted-foreground">SwiftGrowthDigital</p><h1 className="text-xl font-bold">WhatsApp Management</h1></div></div>
           <div className="flex items-center gap-3"><span className="hidden text-sm text-muted-foreground sm:inline">{session.user.email}</span><Button variant="outline" size="sm" onClick={() => void supabase.auth.signOut()}><LogOut className="mr-2 h-4 w-4" /> Sign out</Button></div>
         </div>
       </header>
 
-      <div className={`mx-auto max-w-7xl px-4 py-6 md:px-8 ${tab === "messages" ? "flex min-h-0 w-full flex-1 flex-col overflow-hidden" : ""}`}>
+      <div className={`px-4 py-6 md:px-8 w-full max-w-none min-w-0 ${tab === "messages" ? "flex min-h-0 flex-1 flex-col overflow-hidden" : ""}`}>
         <nav className="mb-6 flex shrink-0 gap-2 overflow-x-auto border-b border-border pb-3" aria-label="WhatsApp administration">
           {tabs.map(({ id, label, icon: Icon }) => <Button key={id} variant={tab === id ? "default" : "ghost"} size="sm" onClick={() => setTab(id)}><Icon className="mr-2 h-4 w-4" />{label}</Button>)}
         </nav>

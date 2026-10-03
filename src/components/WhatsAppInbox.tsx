@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { ChatMediaImage, ChatMediaVideo, ChatMediaDocument, ChatMediaAudio, ChatMediaSticker } from "@/components/ChatMedia";
 
 type WhatsAppConversation = Database["public"]["Views"]["whatsapp_conversations"]["Row"];
 type WhatsAppMessage = Database["public"]["Tables"]["whatsapp_messages"]["Row"] & {
@@ -202,82 +203,59 @@ function renderMessageContent(message: WhatsAppMessage, mediaTokens: Record<stri
 
   if (type === "image" && content?.image) {
     return (
-      <div className="space-y-1">
-        <ImageWithLightbox
-          src={mediaUrl}
-          alt={content.image.caption ?? "Image"}
-          caption={content.image.caption}
-          messageId={message.id}
-          timestamp={message.created_at}
-          downloadUrl={downloadUrl}
-          filename={content.image.caption ? `${content.image.caption.slice(0, 100)}.jpg` : "image.jpg"}
-        />
-        {content.image.caption && <p className="text-xs text-muted-foreground">{content.image.caption}</p>}
-      </div>
+      <ChatMediaImage
+        src={mediaUrl}
+        alt={content.image.caption ?? "Image"}
+        caption={content.image.caption}
+        timestamp={message.created_at}
+        downloadUrl={downloadUrl}
+        isOutbound={message.direction === "outbound"}
+        statusIcon={message.direction === "outbound" ? getStatusIcon(message.status) : undefined}
+      />
     );
   }
 
   if (type === "video" && content?.video) {
     return (
-      <div className="space-y-1">
-        <video src={mediaUrl} controls className="max-w-xs rounded-lg border border-border" />
-        {content.video.caption && <p className="text-xs text-muted-foreground">{content.video.caption}</p>}
-        <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
-          <Download className="w-3 h-3" /> Download
-        </a>
-      </div>
+      <ChatMediaVideo
+        src={mediaUrl}
+        caption={content.video.caption}
+        downloadUrl={downloadUrl}
+        timestamp={message.created_at}
+        isOutbound={message.direction === "outbound"}
+        statusIcon={message.direction === "outbound" ? getStatusIcon(message.status) : undefined}
+      />
     );
   }
 
   if (type === "document" && content?.document) {
-    const isPdf = content.document.mime_type === "application/pdf";
     return (
-      <div className="space-y-1">
-        {isPdf ? (
-          <iframe 
-            src={mediaUrl} 
-            className="max-w-xs min-h-[200px] rounded-lg border border-border"
-            title={content.document.filename ?? "Document"}
-          />
-        ) : (
-          <div className="flex items-center gap-2 p-2 border border-border rounded-lg bg-muted">
-            <Paperclip className="w-8 h-8 text-muted-foreground" />
-            <div className="min-w-0">
-              <p className="text-sm font-medium truncate">{content.document.filename ?? "Document"}</p>
-              <p className="text-xs text-muted-foreground">
-                {content.document.mime_type ?? "application/octet-stream"}
-                {content.document.sha256 && ` · ${content.document.sha256.slice(0, 16)}…`}
-              </p>
-            </div>
-          </div>
-        )}
-        {content.document.caption && <p className="text-xs text-muted-foreground">{content.document.caption}</p>}
-        <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-          <Download className="w-3 h-3" /> Download
-        </a>
-      </div>
+      <ChatMediaDocument
+        src={mediaUrl}
+        filename={content.document.filename}
+        mimeType={content.document.mime_type}
+        caption={content.document.caption}
+        downloadUrl={downloadUrl}
+        sha256={content.document.sha256}
+      />
     );
   }
 
   if (type === "audio" && content?.audio) {
     return (
-      <div className="space-y-1">
-        <audio src={mediaUrl} controls className="w-full max-w-xs" />
-        <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-          <Download className="w-3 h-3" /> Download
-        </a>
-      </div>
+      <ChatMediaAudio
+        src={mediaUrl}
+        downloadUrl={downloadUrl}
+      />
     );
   }
 
   if (type === "sticker" && content?.sticker) {
     return (
-      <div className="space-y-1">
-        <img src={mediaUrl} alt="Sticker" className="w-16 h-16 rounded" />
-        <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-          <Download className="w-3 h-3" /> Download
-        </a>
-      </div>
+      <ChatMediaSticker
+        src={mediaUrl}
+        downloadUrl={downloadUrl}
+      />
     );
   }
 
