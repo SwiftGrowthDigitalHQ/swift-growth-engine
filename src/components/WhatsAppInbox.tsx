@@ -952,7 +952,11 @@ const insertEmoji = useCallback((emoji: string) => {
         setWindowExpiresAt(sendData.windowExpiresAt);
         setWindowExpired(false);
       }
-      await fetchMessages(selectedPhone);
+      
+      // Don't refetch - let realtime/webhook update the message list
+      // This prevents race conditions where sent message doesn't appear
+      console.log("[WhatsApp] Media sent successfully, waiting for realtime update...");
+      
       setMediaPreview(null);
       setReplyingToMessage(null);
     } catch (e) {
@@ -962,7 +966,7 @@ const insertEmoji = useCallback((emoji: string) => {
     } finally {
       setUploadProgress(null);
     }
-  }, [selectedPhone, mediaPreview, replyingToMessage, fetchMessages, toast, uploadProgress]);
+  }, [selectedPhone, mediaPreview, replyingToMessage, toast, uploadProgress]);
 
   const sendReply = useCallback(async () => {
     if (!selectedPhone || (!replyText.trim() && !mediaPreview) || sending) return;
@@ -984,7 +988,11 @@ const insertEmoji = useCallback((emoji: string) => {
         setWindowExpiresAt(data.windowExpiresAt);
         setWindowExpired(false);
       }
-      await fetchMessages(selectedPhone);
+      
+      // Don't refetch - let realtime/webhook update the message list
+      // This prevents race conditions where sent message doesn't appear
+      console.log("[WhatsApp] Message sent successfully, waiting for realtime update...");
+      
       setReplyingToMessage(null);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Failed to send reply";
@@ -997,7 +1005,7 @@ const insertEmoji = useCallback((emoji: string) => {
     } finally {
       setSending(false);
     }
-  }, [selectedPhone, replyText, sending, mediaPreview, replyingToMessage, fetchMessages, toast, sendMedia]);
+  }, [selectedPhone, replyText, sending, mediaPreview, replyingToMessage, toast, sendMedia]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -1034,14 +1042,17 @@ const insertEmoji = useCallback((emoji: string) => {
         toast({ title: "Cannot retry", description: "Media messages cannot be retried automatically. Please resend.", variant: "destructive" });
         return;
       }
-      await fetchMessages(selectedPhone);
+      
+      // Don't refetch - let realtime update the message status
+      console.log("[WhatsApp] Retry sent successfully, waiting for realtime update...");
+      
     } catch (e) {
       const message = e instanceof Error ? e.message : "Failed to retry";
       toast({ title: "Retry failed", description: message, variant: "destructive" });
     } finally {
       setSending(false);
     }
-  }, [selectedPhone, sending, replyingToMessage, fetchMessages, toast]);
+  }, [selectedPhone, sending, replyingToMessage, toast]);
 
   const handleClickOutside = useCallback((e: React.MouseEvent) => {
     if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) {
