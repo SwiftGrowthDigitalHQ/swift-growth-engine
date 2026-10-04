@@ -1,16 +1,18 @@
 import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Phone } from "lucide-react";
+import { Menu, X, Phone, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SoundToggle } from "@/components/SoundToggle";
 import { useSound } from "@/hooks/use-sound";
+import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/services", label: "Services" },
   { href: "/blog", label: "Blog" },
   { href: "/case-studies", label: "Case Studies" },
+  { href: "/ventures", label: "Our Ventures" },
   { href: "/testimonials", label: "Testimonials" },
   { href: "/pricing", label: "Pricing" },
   { href: "/free-audit", label: "Free Audit" },
@@ -42,21 +44,21 @@ export function Navbar() {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border transition-all duration-300 ${isScrolled ? "py-0" : "py-1"}`}>
       <div className="container mx-auto px-4">
-        <div className={`flex items-center justify-between transition-all duration-300 ${isScrolled ? "h-14" : "h-16 md:h-20"}`}>
+        <div className={`flex items-center justify-between flex-nowrap transition-all duration-300 ${isScrolled ? "h-14" : "h-16 md:h-20"}`}>
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-xl md:text-2xl font-display font-bold">
+          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-xl md:text-2xl font-display font-bold whitespace-nowrap">
               <span className="text-primary">Swiftgrowth</span><span className="text-foreground">digital</span>
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-6 ml-8 flex-shrink-0">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                className={`text-sm font-medium transition-colors hover:text-primary whitespace-nowrap flex-shrink-0 ${
                   location.pathname === link.href
                     ? "text-primary"
                     : "text-muted-foreground"
@@ -68,19 +70,23 @@ export function Navbar() {
           </div>
 
           {/* CTA Buttons */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             <SoundToggle />
             <a href="tel:+919229721835">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="whitespace-nowrap flex-shrink-0">
                 <Phone className="w-4 h-4" />
                 Call Now
               </Button>
             </a>
-            <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-              <Button variant="whatsapp" size="sm" onClick={playClick}>
-                WhatsApp Now
-              </Button>
-            </a>
+            <WhatsAppCTA
+              source="navbar"
+              size="sm"
+              icon={<MessageCircle className="w-4 h-4" />}
+              onClick={playClick}
+              className="whitespace-nowrap flex-shrink-0"
+            >
+              WhatsApp Now
+            </WhatsAppCTA>
           </div>
 
           {/* Mobile Menu Button */}
@@ -121,11 +127,14 @@ export function Navbar() {
                     Call Now
                   </Button>
                 </a>
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                  <Button variant="whatsapp" className="w-full" onClick={playClick}>
-                    WhatsApp Now
-                  </Button>
-                </a>
+                <WhatsAppCTA
+                  source="navbar"
+                  icon={<MessageCircle className="w-4 h-4" />}
+                  onClick={playClick}
+                  className="w-full"
+                >
+                  WhatsApp Now
+                </WhatsAppCTA>
               </div>
             </div>
           </div>

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { TestimonialCarousel } from "@/components/TestimonialCarousel";
 import { VideoTestimonial } from "@/components/VideoTestimonial";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
+import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 
 const testimonials = [
   // Clinic Testimonials
@@ -294,7 +295,7 @@ const Testimonials = () => {
         {/* Stats Section */}
         <section className="py-16 bg-card border-y border-border">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 gap-x-8">
               {[
                 { value: "100+", label: "Happy Clients" },
                 { value: "₹10Cr+", label: "Revenue Generated" },
@@ -323,10 +324,14 @@ const Testimonials = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                  <Button variant="whatsapp" size="xl">
-                    <MessageCircle className="w-5 h-5" />
+                  <WhatsAppCTA
+                    source="testimonials"
+                    variant="whatsapp"
+                    size="xl"
+                    icon={<MessageCircle className="w-5 h-5" />}
+                  >
                     Chat on WhatsApp
-                  </Button>
+                  </WhatsAppCTA>
                 </a>
                 <a href="/free-audit">
                   <Button variant="outline" size="xl">

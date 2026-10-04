@@ -170,7 +170,10 @@ function getMessagePreview(message: WhatsAppMessage): string {
   if (type === "contacts") return "👤 Contact";
   if (type === "interactive") return "🔘 Interactive";
   if (type === "reaction") return "↩️ Reaction";
-  return type || "Message";
+  if (type === "system") return "⚙️ System notification";
+  if (type === "referral") return "📢 Referral / Ad message";
+  if (type === "order") return "🛒 Order received";
+  return "💬 Message";
 }
 
 function getStatusIcon(status: string) {
@@ -301,7 +304,91 @@ function renderMessageContent(message: WhatsAppMessage, mediaTokens: Record<stri
     );
   }
 
-  return <div className="text-xs text-muted-foreground">Unsupported message type: {type}</div>;
+  if (type === "system" && content?.system) {
+    const system = content.system as Record<string, unknown>;
+    const body = typeof system.body === "string" ? system.body : "";
+    const sysType = typeof system.type === "string" ? system.type : "";
+    return (
+      <div className="p-2 border border-border rounded-lg text-sm bg-muted/50">
+        <p className="font-medium text-xs text-muted-foreground">⚙️ System Notification</p>
+        {sysType && <p className="text-xs text-muted-foreground mt-0.5">Type: {sysType}</p>}
+        {body && <p className="whitespace-pre-wrap break-words text-sm mt-1">{body}</p>}
+        {!body && !sysType && <p className="text-xs text-muted-foreground mt-0.5">System event</p>}
+      </div>
+    );
+  }
+
+  if (type === "referral" && content?.referral) {
+    const referral = content.referral as Record<string, unknown>;
+    const headline = typeof referral.headline === "string" ? referral.headline : "";
+    const body = typeof referral.body === "string" ? referral.body : "";
+    const sourceType = typeof referral.source_type === "string" ? referral.source_type : "";
+    const sourceId = typeof referral.source_id === "string" ? referral.source_id : "";
+    return (
+      <div className="p-2 border border-border rounded-lg text-sm bg-muted/50">
+        <p className="font-medium text-xs text-muted-foreground">📢 Referral Message</p>
+        {sourceType && <p className="text-xs text-muted-foreground mt-0.5">Source: {sourceType}{sourceId ? ` (${sourceId})` : ""}</p>}
+        {headline && <p className="font-medium text-sm mt-1">{headline}</p>}
+        {body && <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground mt-1">{body}</p>}
+        {!headline && !body && !sourceType && <p className="text-xs text-muted-foreground mt-0.5">Referral from ad</p>}
+      </div>
+    );
+  }
+
+  if (type === "order" && content?.order) {
+    const order = content.order as Record<string, unknown>;
+    const catalogId = typeof order.catalog_id === "string" ? order.catalog_id : "";
+    const productItems = Array.isArray(order.product_items) ? order.product_items : [];
+    return (
+      <div className="p-2 border border-border rounded-lg text-sm bg-muted/50">
+        <p className="font-medium text-xs text-muted-foreground">🛒 Order Received</p>
+        {catalogId && <p className="text-xs text-muted-foreground mt-0.5">Catalog: {catalogId}</p>}
+        {productItems.length > 0 && (
+          <div className="mt-2 space-y-1">
+            {productItems.map((item: unknown, i: number) => {
+              const itemRec = item as Record<string, unknown>;
+              const retailerId = typeof itemRec.product_retailer_id === "string" ? itemRec.product_retailer_id : "";
+              const quantity = typeof itemRec.quantity === "number" ? itemRec.quantity : "";
+              const name = typeof itemRec.name === "string" ? itemRec.name : "";
+              const price = typeof itemRec.item_price === "number" ? itemRec.item_price : "";
+              const currency = typeof itemRec.currency === "string" ? itemRec.currency : "";
+              return (
+                <div key={i} className="text-xs text-muted-foreground">
+                  {name && <span className="font-medium">{name}</span>}
+                  {retailerId && <span className="ml-1">(SKU: {retailerId})</span>}
+                  {quantity && <span className="ml-1">× {quantity}</span>}
+                  {price && currency && <span className="ml-1">{currency} {price}</span>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {productItems.length === 0 && !catalogId && <p className="text-xs text-muted-foreground mt-0.5">Order details not available</p>}
+      </div>
+    );
+  }
+
+  return <div className="text-xs text-muted-foreground">Message type not yet supported: {type}</div>;
+}
+
+function isNotProvided(value: string | null | undefined): boolean {
+  return !value || value === "Not provided";
+}
+
+function formatLeadBusinessInfo(businessType: string | null | undefined, city: string | null | undefined): string | null {
+  const hasBusinessType = !isNotProvided(businessType);
+  const hasCity = !isNotProvided(city);
+
+  if (hasBusinessType && hasCity) {
+    return `${businessType} · ${city}`;
+  }
+  if (hasBusinessType) {
+    return businessType!;
+  }
+  if (hasCity) {
+    return city!;
+  }
+  return null;
 }
 
 const ConversationItem = React.memo(function ConversationItem({
@@ -316,9 +403,7 @@ const ConversationItem = React.memo(function ConversationItem({
   unreadCount: number;
 }) {
   const displayName = conversation.lead_name ?? conversation.contact_name ?? `Unknown (+${conversation.recipient_phone})`;
-  const businessInfo = conversation.lead_business_type && conversation.lead_city
-    ? `${conversation.lead_business_type} · ${conversation.lead_city}`
-    : conversation.lead_business_type ?? conversation.lead_city ?? null;
+  const businessInfo = formatLeadBusinessInfo(conversation.lead_business_type, conversation.lead_city);
 
   const preview = conversation.last_message_content
     ? getMessagePreview({

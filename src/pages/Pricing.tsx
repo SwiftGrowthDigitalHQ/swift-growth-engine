@@ -1,4 +1,3 @@
-import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
@@ -6,6 +5,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { Check, ArrowRight, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
+import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 
 const plans = [
   {
@@ -74,7 +74,6 @@ const plans = [
 ];
 
 const Pricing = () => {
-  const whatsappLink = WHATSAPP_CONTACT_URL;
 
   return (
     <div className="min-h-screen bg-background">
@@ -86,10 +85,10 @@ const Pricing = () => {
           <div className="absolute inset-0 bg-hero-glow" />
           <div className="container mx-auto px-4 relative z-10">
             <AnimatedSection className="max-w-3xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-6 leading-tight">
                 Simple, <span className="text-gradient">Transparent Pricing</span>
               </h1>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-lg sm:text-xl text-muted-foreground">
                 Choose a plan that fits your business needs. All prices are for service fees only.
                 <br />
                 <span className="text-sm">Ads budget is always separate and managed transparently.</span>
@@ -125,7 +124,7 @@ const Pricing = () => {
                         {plan.description}
                       </p>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-display font-bold text-foreground">
+                        <span className="text-4xl sm:text-5xl font-display font-bold text-foreground">
                           {plan.price}
                         </span>
                         <span className="text-muted-foreground">{plan.suffix}</span>
@@ -138,7 +137,7 @@ const Pricing = () => {
                         {plan.features.map((feature, i) => (
                           <li key={i} className="flex items-start gap-2">
                             <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                            <span className="text-sm text-muted-foreground">{feature}</span>
+                            <span className="text-sm text-muted-foreground break-words">{feature}</span>
                           </li>
                         ))}
                       </ul>
@@ -150,7 +149,7 @@ const Pricing = () => {
                             {plan.notIncluded.map((feature, i) => (
                               <li key={i} className="flex items-start gap-2 opacity-50">
                                 <span className="w-4 h-4 flex-shrink-0 text-center">-</span>
-                                <span className="text-sm text-muted-foreground">{feature}</span>
+                                <span className="text-sm text-muted-foreground break-words">{feature}</span>
                               </li>
                             ))}
                           </ul>
@@ -158,17 +157,16 @@ const Pricing = () => {
                       )}
                     </div>
 
-                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                      <Button
+                    <WhatsAppCTA
+                        source="pricing"
                         variant={plan.popular ? "whatsapp" : "outline"}
-                        className="w-full"
                         size="lg"
+                        className="w-full"
+                        icon={plan.popular ? <MessageCircle className="w-4 h-4" /> : undefined}
+                        iconRight={<ArrowRight className="w-4 h-4" />}
                       >
-                        {plan.popular && <MessageCircle className="w-4 h-4" />}
                         Get Started
-                        <ArrowRight className="w-4 h-4" />
-                      </Button>
-                    </a>
+                      </WhatsAppCTA>
                   </div>
                 </AnimatedSection>
               ))}
@@ -194,18 +192,21 @@ const Pricing = () => {
         <section className="py-16 md:py-24">
           <div className="container mx-auto px-4">
             <AnimatedSection className="max-w-3xl mx-auto text-center">
-              <h2 className="text-3xl md:text-4xl font-display font-bold mb-6">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold mb-6 leading-tight">
                 Not Sure Which Plan is Right?
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
                 Get a free consultation and we'll help you choose the best plan for your business.
               </p>
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                <Button variant="hero" size="xl">
-                  <MessageCircle className="w-5 h-5" />
-                  Get Free Consultation
-                </Button>
-              </a>
+              <WhatsAppCTA
+                source="pricing"
+                variant="hero"
+                size="xl"
+                icon={<MessageCircle className="w-5 h-5" />}
+                className="w-full max-w-xs sm:max-w-sm md:max-w-md"
+              >
+                Get Free Consultation
+              </WhatsAppCTA>
             </AnimatedSection>
           </div>
           </section>

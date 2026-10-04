@@ -10,6 +10,7 @@ import { trackConversion } from '@/lib/analytics';
 import { MessageCircle, Loader2, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { WhatsAppCTA } from '@/components/WhatsAppCTA';
 
 interface ContactFormProps {
   source?: string;
@@ -85,6 +86,12 @@ export function ContactForm({ source = 'contact_form', onSuccess }: ContactFormP
       return;
     }
 
+    // Mandatory WhatsApp consent validation
+    if (!formData.whatsapp_opt_in) {
+      toast.error('Please confirm your WhatsApp marketing consent to continue.');
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmissionResult(null);
 
@@ -151,12 +158,15 @@ export function ContactForm({ source = 'contact_form', onSuccess }: ContactFormP
         <p className="text-muted-foreground mb-2">
           We've received your request for <span className="text-primary font-medium">{submissionResult.businessType}</span> marketing.
         </p>
-        <p className="text-sm text-muted-foreground mb-6">
-          Your request has been saved. Start a WhatsApp conversation whenever you’re ready.
+<p className="text-sm text-muted-foreground mb-6">
+          Your request has been saved. Start a WhatsApp conversation whenever you're ready.
         </p>
-        <a href={WHATSAPP_CONTACT_URL} target="_blank" rel="noopener noreferrer" className="inline-block mb-6">
-          <Button variant="whatsapp" className="gap-2"><MessageCircle className="h-4 w-4" /> Chat on WhatsApp</Button>
-        </a>
+        <WhatsAppCTA
+          source={source}
+          ctaText="Chat on WhatsApp"
+          icon={<MessageCircle className="w-4 h-4" />}
+          className="gap-2 w-full max-w-xs sm:max-w-sm mx-auto"
+        />
         <Button
           variant="outline"
           size="sm"
@@ -192,12 +202,12 @@ export function ContactForm({ source = 'contact_form', onSuccess }: ContactFormP
             <RefreshCw className="w-4 h-4" />
             Try Again
           </Button>
-          <a href={WHATSAPP_CONTACT_URL} target="_blank" rel="noopener noreferrer">
-            <Button variant="whatsapp" className="gap-2 w-full">
-              <MessageCircle className="w-4 h-4" />
-              Contact on WhatsApp
-            </Button>
-          </a>
+          <WhatsAppCTA
+            source={source}
+            ctaText="Contact on WhatsApp"
+            icon={<MessageCircle className="w-4 h-4" />}
+            className="gap-2 w-full sm:max-w-sm"
+          />
         </div>
       </div>
     );
@@ -278,18 +288,21 @@ export function ContactForm({ source = 'contact_form', onSuccess }: ContactFormP
           checked={formData.whatsapp_opt_in}
           onCheckedChange={(checked) => setFormData({ ...formData, whatsapp_opt_in: checked === true })}
           disabled={isSubmitting}
-          className="mt-0.5"
+          className="mt-0.5 flex-shrink-0"
         />
-        <span className="text-muted-foreground">
+        <span className="text-muted-foreground break-words">
           I agree to receive marketing updates from SwiftGrowthDigital on WhatsApp. This is optional; I can ask to stop messages at any time.
         </span>
       </label>
+      <p className="text-xs text-muted-foreground text-center">
+        Marketing consent is required to submit this form.
+      </p>
 
       <Button
         type="submit"
         variant="whatsapp"
         size="lg"
-        className="w-full btn-shine"
+        className="w-full btn-shine max-w-full"
         disabled={isSubmitting}
       >
         {isSubmitting ? (

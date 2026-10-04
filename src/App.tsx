@@ -28,6 +28,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import CaseStudies from "./pages/CaseStudies";
 import Testimonials from "./pages/Testimonials";
+import Ventures from "./pages/Ventures";
 import NotFound from "./pages/NotFound";
 import { PrivacyPolicy, TermsOfService, DataDeletion, CookiePolicy, RefundPolicy } from "./pages/LegalPages";
 
@@ -84,6 +85,7 @@ const App = () => (
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/case-studies" element={<CaseStudies />} />
             <Route path="/testimonials" element={<Testimonials />} />
+            <Route path="/ventures" element={<Ventures />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/data-deletion" element={<DataDeletion />} />

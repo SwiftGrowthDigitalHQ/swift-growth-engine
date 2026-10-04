@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { trackConversion } from "@/lib/analytics";
 import { useSound } from "@/hooks/use-sound";
+import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 
 type Message = {
   role: "user" | "assistant";
@@ -300,7 +301,7 @@ export function UnifiedChatWidget() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-[calc(100vw-48px)] max-w-[400px] h-[560px] max-h-[80vh] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+        <div className="fixed bottom-4 right-4 left-4 z-50 max-w-[400px] h-[560px] max-h-[80vh] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up mx-auto sm:mx-0 sm:left-auto sm:right-4">
           {/* Header */}
           <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
             <div className="flex items-center gap-3">
@@ -389,16 +390,13 @@ export function UnifiedChatWidget() {
           {/* WhatsApp CTA (only after qualification) */}
           {showWhatsAppCTA && !isLoading && (
             <div className="px-4 py-3 border-t border-border bg-card">
-              <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
+              <WhatsAppCTA
+                source="chatbot"
+                ctaText="Chat on WhatsApp for Free Plan"
+                icon={<MessageSquare className="w-5 h-5" />}
+                className="w-full"
                 onClick={() => trackConversion.whatsappChatStart("qualified_handoff")}
-                className="flex items-center justify-center gap-2 w-full py-3 bg-[hsl(142,70%,45%)] hover:bg-[hsl(142,70%,40%)] text-white font-semibold rounded-xl transition-colors"
-              >
-                <MessageSquare className="w-5 h-5" />
-                Chat on WhatsApp for Free Plan
-              </a>
+              />
             </div>
           )}
 

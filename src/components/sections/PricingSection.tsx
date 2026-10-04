@@ -2,6 +2,7 @@ import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { Check, ArrowRight, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
+import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 
 const plans = [
   {
@@ -115,17 +116,16 @@ export function PricingSection() {
                   ))}
                 </ul>
 
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                  <Button
+                <WhatsAppCTA
+                    source="pricing_section"
                     variant={plan.popular ? "whatsapp" : "outline"}
-                    className="w-full"
                     size="lg"
+                    className="w-full"
+                    icon={plan.popular ? <MessageCircle className="w-4 h-4" /> : undefined}
+                    iconRight={<ArrowRight className="w-4 h-4" />}
                   >
-                    {plan.popular && <MessageCircle className="w-4 h-4" />}
                     Get Started
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </a>
+                  </WhatsAppCTA>
               </div>
             </AnimatedSection>
           ))}

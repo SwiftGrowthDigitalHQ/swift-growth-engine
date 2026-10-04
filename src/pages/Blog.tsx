@@ -3,10 +3,11 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
 import { PageTransition } from "@/components/PageTransition";
-import { ArrowRight, Calendar, Clock, User } from "lucide-react";
+import { ArrowRight, Calendar, Clock, User, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
+import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 
 const blogPosts = [
   {
@@ -200,10 +201,15 @@ const Blog = () => {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Button variant="whatsapp" size="lg">
+                <WhatsAppCTA
+                  source="blog"
+                  variant="whatsapp"
+                  size="lg"
+                  icon={<MessageCircle className="w-4 h-4" />}
+                  iconRight={<ArrowRight className="w-4 h-4" />}
+                >
                   Subscribe on WhatsApp
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+                </WhatsAppCTA>
               </a>
             </AnimatedSection>
           </div>

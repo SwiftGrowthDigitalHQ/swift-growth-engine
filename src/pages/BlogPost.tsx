@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Calendar, Clock, User, Share2, MessageCircle } from 'lucide-react';
 import { trackConversion } from '@/lib/analytics';
 import { AnimatedSection } from '@/hooks/use-scroll-animation';
+import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 
 // Blog posts data with full content
 const blogPostsData: Record<string, {
@@ -619,10 +620,14 @@ const BlogPost = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Button variant="whatsapp" className="w-full">
-                      <MessageCircle className="w-4 h-4" />
+                    <WhatsAppCTA
+                      source="blog_post"
+                      variant="whatsapp"
+                      className="w-full"
+                      icon={<MessageCircle className="w-4 h-4" />}
+                    >
                       Chat on WhatsApp
-                    </Button>
+                    </WhatsAppCTA>
                   </a>
                 </div>
 
@@ -668,10 +673,14 @@ const BlogPost = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Button variant="whatsapp" size="lg">
-                    <MessageCircle className="w-5 h-5" />
+                  <WhatsAppCTA
+                    source="blog_post"
+                    variant="whatsapp"
+                    size="lg"
+                    icon={<MessageCircle className="w-5 h-5" />}
+                  >
                     Get Free Audit
-                  </Button>
+                  </WhatsAppCTA>
                 </a>
                 <Link to="/case-studies">
                   <Button variant="outline" size="lg">

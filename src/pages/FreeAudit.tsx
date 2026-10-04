@@ -11,6 +11,7 @@ import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
+import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 
 const FreeAudit = () => {
   const [formData, setFormData] = useState({
@@ -29,6 +30,13 @@ const FreeAudit = () => {
       toast.error("The audit form is unavailable because Supabase is not configured for this app.");
       return;
     }
+
+    // Mandatory WhatsApp consent validation
+    if (!formData.whatsapp_opt_in) {
+      toast.error('Please confirm your WhatsApp marketing consent to continue.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -119,7 +127,7 @@ const FreeAudit = () => {
                 {/* Right - Form */}
                 <AnimatedSection direction="right" delay={150}>
                   <div className="p-6 md:p-8 rounded-2xl bg-card border border-border">
-                    {isSuccess ? (
+{isSuccess ? (
                       <div className="text-center py-8">
                         <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                           <CheckCircle className="w-8 h-8 text-primary" />
@@ -131,11 +139,14 @@ const FreeAudit = () => {
                           Your free audit request has been received.
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Start a WhatsApp conversation whenever you’re ready.
+                          Start a WhatsApp conversation whenever you're ready.
                         </p>
-                        <a className="mt-5 inline-flex" href={WHATSAPP_CONTACT_URL} target="_blank" rel="noopener noreferrer">
-                          <Button variant="whatsapp"><MessageCircle className="mr-2 h-4 w-4" /> Chat on WhatsApp</Button>
-                        </a>
+                        <WhatsAppCTA
+                          source="free_audit"
+                          ctaText="Chat on WhatsApp"
+                          icon={<MessageCircle className="mr-2 h-4 w-4" />}
+                          className="mt-5"
+                        />
                       </div>
                     ) : (
                       <>
@@ -222,6 +233,9 @@ const FreeAudit = () => {
                               I agree to receive marketing updates from SwiftGrowthDigital on WhatsApp. This is optional; I can ask to stop messages at any time.
                             </span>
                           </label>
+                          <p className="text-xs text-muted-foreground text-center">
+                            Marketing consent is required to submit this form.
+                          </p>
                           
                           <Button
                             type="submit"

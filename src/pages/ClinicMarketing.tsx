@@ -7,6 +7,7 @@ import { ParallaxHero } from "@/components/ParallaxHero";
 import { Check, ArrowRight, MessageCircle, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
+import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 
 const ClinicMarketing = () => {
   const whatsappLink = WHATSAPP_CONTACT_URL;
@@ -60,12 +61,14 @@ const ClinicMarketing = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                  <Button variant="whatsapp" size="xl">
-                    <MessageCircle className="w-5 h-5" />
-                    Get Free Clinic Audit
-                  </Button>
-                </a>
+                <WhatsAppCTA
+                  source="clinic"
+                  variant="whatsapp"
+                  size="xl"
+                  icon={<MessageCircle className="w-5 h-5" />}
+                >
+                  Get Free Clinic Audit
+                </WhatsAppCTA>
               </div>
             </AnimatedSection>
           </div>
@@ -140,13 +143,15 @@ const ClinicMarketing = () => {
                 Get a free audit of your clinic's online presence and discover 
                 exactly how to attract more patients.
               </p>
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                <Button variant="hero" size="xl">
-                  <MessageCircle className="w-5 h-5" />
-                  WhatsApp for Free Audit
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </a>
+              <WhatsAppCTA
+                source="clinic"
+                variant="hero"
+                size="xl"
+                icon={<MessageCircle className="w-5 h-5" />}
+                iconRight={<ArrowRight className="w-5 h-5" />}
+              >
+                WhatsApp for Free Audit
+              </WhatsAppCTA>
             </AnimatedSection>
           </div>
         </section>

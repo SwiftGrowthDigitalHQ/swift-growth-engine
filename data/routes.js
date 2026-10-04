@@ -5,6 +5,7 @@ export const routes = [
   { url: "/services", priority: 0.9, changefreq: "weekly" },
   { url: "/blog", priority: 0.8, changefreq: "weekly" },
   { url: "/case-studies", priority: 0.8, changefreq: "monthly" },
+  { url: "/ventures", priority: 0.8, changefreq: "monthly" },
   { url: "/testimonials", priority: 0.7, changefreq: "monthly" },
   { url: "/pricing", priority: 0.7, changefreq: "monthly" },
   { url: "/free-audit", priority: 0.9, changefreq: "weekly" },

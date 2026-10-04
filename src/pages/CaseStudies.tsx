@@ -1,4 +1,3 @@
-import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { UnifiedChatWidget } from "@/components/UnifiedChatWidget";
@@ -8,8 +7,41 @@ import { Button } from "@/components/ui/button";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { VideoTestimonial } from "@/components/VideoTestimonial";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
+import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 
 const caseStudies = [
+  {
+    id: "chai-theka-qr-menu",
+    industry: "Food & Beverage / Cafe",
+    clientName: "Chai Theka",
+    location: "Buxar, Bihar",
+    badge: "QR Digital Menu",
+    badgeColor: "bg-orange-500/20 text-orange-400",
+    background: "Chai Theka, a tea and snacks business in Buxar, Bihar, wanted to provide customers with a simple and modern way to access their menu digitally.",
+    problem: "Chai Theka needed a simple and customer-friendly way to connect its physical dining experience with a digital menu. The goal was to provide customers with an easy QR-based entry point to explore the menu from their smartphones.",
+    strategy: [
+      "Designed a branded QR digital menu experience matching Chai Theka's visual identity",
+      "Created a prominent QR code for customers to scan and access the menu",
+      "Delivered a mobile-friendly digital menu experience for scan-to-menu access",
+    ],
+    results: {
+      before: {
+        leads: "N/A",
+        calls: "N/A",
+        inquiries: "N/A",
+      },
+      after: {
+        leads: "N/A",
+        calls: "N/A",
+        inquiries: "N/A",
+      },
+    },
+    quote: "",
+    duration: "Completed & Delivered",
+    beforeImage: null,
+    afterImage: "/chai_theka.png",
+    videoId: null,
+  },
   {
     id: "dental-clinic-pune",
     industry: "Healthcare / Dental Clinic",
@@ -112,8 +144,6 @@ const caseStudies = [
 ];
 
 const CaseStudies = () => {
-  const whatsappLink = WHATSAPP_CONTACT_URL;
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -128,10 +158,10 @@ const CaseStudies = () => {
                 <TrendingUp className="w-4 h-4 text-primary" />
                 <span className="text-sm font-medium text-muted-foreground">Real Results, Real Businesses</span>
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-6 leading-tight">
                 Case <span className="text-gradient">Studies</span>
               </h1>
-              <p className="text-lg md:text-xl text-muted-foreground">
+              <p className="text-lg sm:text-xl text-muted-foreground">
                 See how we helped local Indian businesses grow with our complete digital growth systems.
                 No fake numbers, just honest results.
               </p>
@@ -149,21 +179,21 @@ const CaseStudies = () => {
                     {/* Header */}
                     <div className="p-6 md:p-8 border-b border-border">
                       <div className="flex flex-wrap items-center gap-4 mb-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${study.badgeColor}`}>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${study.badgeColor} whitespace-nowrap`}>
                           {study.badge}
                         </span>
-                        <span className="text-sm text-muted-foreground">{study.location}</span>
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">{study.location}</span>
                       </div>
-                      <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-2">
+                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-foreground mb-2 leading-tight">
                         {study.clientName}
                       </h2>
                       <p className="text-muted-foreground">{study.industry}</p>
                     </div>
 
-                    <div className="p-6 md:p-8">
+<div className="p-6 md:p-8">
                       <div className="grid lg:grid-cols-2 gap-8">
-                        {/* Left Column - Story */}
-                        <div className="space-y-6">
+                        {/* Story Column - Background, Problem, Strategy */}
+                        <div className="space-y-6 lg:col-span-1">
                           <div>
                             <h3 className="text-lg font-display font-semibold text-foreground mb-3">Background</h3>
                             <p className="text-muted-foreground leading-relaxed">{study.background}</p>
@@ -178,17 +208,31 @@ const CaseStudies = () => {
                               {study.strategy.map((item, i) => (
                                 <li key={i} className="flex items-start gap-3 text-muted-foreground">
                                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                                  <span>{item}</span>
+                                  <span className="break-words">{item}</span>
                                 </li>
                               ))}
                             </ul>
                           </div>
                         </div>
 
-                        {/* Right Column - Results */}
-                        <div className="space-y-6">
-                          {/* Before/After Slider - Only show if images exist */}
-                          {study.beforeImage && study.afterImage && (
+                        {/* Right Column - QR Digital Menu (spans 2 rows on desktop) */}
+                        <div className="space-y-6 lg:col-span-1 lg:row-span-2">
+                          {/* Chai Theka QR Digital Menu Image */}
+                          {study.id === "chai-theka-qr-menu" && study.afterImage && (
+                            <div>
+                              <h3 className="text-lg font-display font-semibold text-foreground mb-4">QR Digital Menu</h3>
+                              <div className="w-full rounded-xl border border-white/10 bg-secondary/30 overflow-hidden flex items-center justify-center max-h-[560px]">
+                                <img
+                                  src={study.afterImage}
+                                  alt={`${study.clientName} QR Digital Menu`}
+                                  className="block w-full h-auto max-h-[540px] object-contain rounded-xl"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Before/After Slider - Only show if images exist (for other case studies) */}
+                          {study.id !== "chai-theka-qr-menu" && study.beforeImage && study.afterImage && (
                             <div>
                               <h3 className="text-lg font-display font-semibold text-foreground mb-4">Visual Results</h3>
                               <BeforeAfterSlider
@@ -200,56 +244,72 @@ const CaseStudies = () => {
                             </div>
                           )}
 
-                          {/* Metrics Comparison */}
-                          <div>
-                            <h3 className="text-lg font-display font-semibold text-foreground mb-4">Results Comparison</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="bg-secondary/50 rounded-xl p-4">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Before</p>
-                                <div className="space-y-3">
-                                  <div className="flex items-center gap-2">
-                                    <Users className="w-4 h-4 text-muted-foreground" />
-                                    <span className="text-sm text-muted-foreground">Leads:</span>
-                                    <span className="font-semibold text-foreground">{study.results.before.leads}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Phone className="w-4 h-4 text-muted-foreground" />
-                                    <span className="text-sm text-muted-foreground">Calls:</span>
-                                    <span className="font-semibold text-foreground">{study.results.before.calls}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <MessageCircle className="w-4 h-4 text-muted-foreground" />
-                                    <span className="text-sm text-muted-foreground">Inquiries:</span>
-                                    <span className="font-semibold text-foreground">{study.results.before.inquiries}</span>
+                          {/* Metrics Comparison - Only show for non-Chai Theka case studies */}
+                          {study.id !== "chai-theka-qr-menu" && (
+                            <div>
+                              <h3 className="text-lg font-display font-semibold text-foreground mb-4">Results Comparison</h3>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="bg-secondary/50 rounded-xl p-4">
+                                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Before</p>
+                                  <div className="space-y-3">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                      <span className="text-sm text-muted-foreground">Leads:</span>
+                                      <span className="font-semibold text-foreground">{study.results.before.leads}</span>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                      <span className="text-sm text-muted-foreground">Calls:</span>
+                                      <span className="font-semibold text-foreground">{study.results.before.calls}</span>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                      <span className="text-sm text-muted-foreground">Inquiries:</span>
+                                      <span className="font-semibold text-foreground">{study.results.before.inquiries}</span>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                              <div className="bg-primary/10 rounded-xl p-4 border border-primary/20">
-                                <p className="text-xs text-primary uppercase tracking-wider mb-3">After</p>
-                                <div className="space-y-3">
-                                  <div className="flex items-center gap-2">
-                                    <Users className="w-4 h-4 text-primary" />
-                                    <span className="text-sm text-muted-foreground">Leads:</span>
-                                    <span className="font-semibold text-primary">{study.results.after.leads}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Phone className="w-4 h-4 text-primary" />
-                                    <span className="text-sm text-muted-foreground">Calls:</span>
-                                    <span className="font-semibold text-primary">{study.results.after.calls}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <MessageCircle className="w-4 h-4 text-primary" />
-                                    <span className="text-sm text-muted-foreground">Inquiries:</span>
-                                    <span className="font-semibold text-primary">{study.results.after.inquiries}</span>
+                                <div className="bg-primary/10 rounded-xl p-4 border border-primary/20">
+                                  <p className="text-xs text-primary uppercase tracking-wider mb-3">After</p>
+                                  <div className="space-y-3">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <Users className="w-4 h-4 text-primary flex-shrink-0" />
+                                      <span className="text-sm text-muted-foreground">Leads:</span>
+                                      <span className="font-semibold text-primary">{study.results.after.leads}</span>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <Phone className="w-4 h-4 text-primary flex-shrink-0" />
+                                      <span className="text-sm text-muted-foreground">Calls:</span>
+                                      <span className="font-semibold text-primary">{study.results.after.calls}</span>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <MessageCircle className="w-4 h-4 text-primary flex-shrink-0" />
+                                      <span className="text-sm text-muted-foreground">Inquiries:</span>
+                                      <span className="font-semibold text-primary">{study.results.after.inquiries}</span>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
+                          )}
                         </div>
+
+                        {/* Customer Review - Only for Chai Theka (left column, row 2 on desktop; after QR on mobile) */}
+                        {study.id === "chai-theka-qr-menu" && (
+                          <div className="mt-8 pt-6 border-t border-border lg:col-start-1 lg:row-start-2">
+                            <h3 className="text-lg font-display font-semibold text-foreground mb-4">Customer Review</h3>
+                            <div className="w-full rounded-xl border border-border overflow-hidden">
+                              <img
+                                src="/Review.png"
+                                alt="Chai Theka Customer Review"
+                                className="block w-full h-auto object-contain"
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
 
-                      {/* Quote & Video */}
+                        {/* Quote & Video */}
                       <div className={`grid ${study.videoId ? 'md:grid-cols-2' : ''} gap-6 mt-8 pt-8 border-t border-border`}>
                         {/* Quote */}
                         <div className="bg-secondary/30 rounded-xl p-6 border-l-4 border-primary">
@@ -291,19 +351,22 @@ const CaseStudies = () => {
         <section className="py-16 md:py-24 bg-gradient-card border-t border-border">
           <div className="container mx-auto px-4">
             <AnimatedSection className="max-w-3xl mx-auto text-center">
-              <h2 className="text-3xl md:text-4xl font-display font-bold mb-6">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold mb-6 leading-tight">
                 Want Similar Results for Your Business?
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
                 Let's discuss how we can build a growth system for your specific business.
                 Free consultation on WhatsApp.
               </p>
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                <Button variant="whatsapp" size="xl">
-                  <MessageCircle className="w-5 h-5" />
-                  Get Free Consultation
-                </Button>
-              </a>
+              <WhatsAppCTA
+                source="case_studies"
+                variant="whatsapp"
+                size="xl"
+                icon={<MessageCircle className="w-5 h-5" />}
+                className="w-full max-w-xs sm:max-w-sm md:max-w-md"
+              >
+                Get Free Consultation
+              </WhatsAppCTA>
             </AnimatedSection>
           </div>
         </section>

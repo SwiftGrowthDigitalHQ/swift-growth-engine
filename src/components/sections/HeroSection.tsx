@@ -3,6 +3,7 @@ import { ArrowRight, MessageCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSound } from "@/hooks/use-sound";
 import { useParallax } from "@/hooks/use-parallax";
+import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 
 export function HeroSection() {
   const { playClick, playTap } = useSound();
@@ -51,12 +52,14 @@ export function HeroSection() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-              <Button variant="whatsapp" size="xl" onClick={playClick}>
-                <MessageCircle className="w-5 h-5" />
-                WhatsApp Now
-              </Button>
-            </a>
+            <WhatsAppCTA
+              source="hero"
+              size="xl"
+              icon={<MessageCircle className="w-5 h-5" />}
+              onClick={playClick}
+            >
+              WhatsApp Now
+            </WhatsAppCTA>
             <a href="/free-audit">
               <Button variant="hero" size="xl" onClick={playTap}>
                 Get Free Growth Audit

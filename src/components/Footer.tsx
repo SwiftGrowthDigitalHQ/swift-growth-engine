@@ -1,6 +1,7 @@
 import { WHATSAPP_CONTACT_URL } from "@/lib/whatsapp";
 import { Link } from "react-router-dom";
-import { Phone, Mail, MapPin } from "lucide-react";
+import { Phone, Mail, MapPin, MessageCircle } from "lucide-react";
+import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 
 // YouTube, Instagram, LinkedIn icons
 const YouTubeIcon = () => (
@@ -86,6 +87,9 @@ export function Footer() {
               <Link to="/case-studies" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Case Studies
               </Link>
+              <Link to="/ventures" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Our Ventures
+              </Link>
               <Link to="/pricing" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Pricing
               </Link>
@@ -152,15 +156,14 @@ export function Footer() {
           <div className="space-y-4">
             <h4 className="font-display font-semibold text-foreground">Contact</h4>
             <div className="flex flex-col gap-3">
-              <a 
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-muted-foreground hover:text-whatsapp transition-colors text-sm"
+              <WhatsAppCTA
+                source="footer"
+                variant="ghost"
+                className="justify-start text-sm"
+                icon={<MessageCircle className="w-4 h-4" />}
               >
-                <Phone className="w-4 h-4" />
                 +91 9229721835
-              </a>
+              </WhatsAppCTA>
               <a 
                 href="mailto:hello@swiftgrowthdigital.com"
                 className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm"

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/hooks/use-scroll-animation";
+import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 
 const services = [
   {
@@ -183,11 +184,15 @@ const Services = () => {
                   Get a free consultation and discover which services are right for you.
                 </p>
                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                  <Button variant="whatsapp" size="xl">
-                    <MessageCircle className="w-5 h-5" />
+                  <WhatsAppCTA
+                    source="services"
+                    variant="whatsapp"
+                    size="xl"
+                    icon={<MessageCircle className="w-5 h-5" />}
+                    iconRight={<ArrowRight className="w-5 h-5" />}
+                  >
                     WhatsApp Now
-                    <ArrowRight className="w-5 h-5" />
-                  </Button>
+                  </WhatsAppCTA>
                 </a>
               </AnimatedSection>
             </div>
